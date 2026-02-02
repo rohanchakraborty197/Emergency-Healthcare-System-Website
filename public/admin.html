@@ -765,8 +765,6 @@
 
     <script>
         let adminUser = null;
-
-        // Check authentication on page load
         window.onload = function () {
             const admin = sessionStorage.getItem('adminUser');
             if (admin) {
@@ -948,7 +946,7 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    loadData(); // Refresh
+                    loadData();
                 } else {
                     alert(data.message || 'Failed to update status');
                 }
@@ -973,7 +971,6 @@
             });
         }
 
-        // Allow Enter key to submit login
         document.addEventListener('keypress', function (e) {
             if (e.key === 'Enter' && document.getElementById('loginView').style.display !== 'none') {
                 handleAdminLogin();
