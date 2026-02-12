@@ -5,7 +5,7 @@
 
 USE tracknheal_db;
 
--- Diseases table
+
 CREATE TABLE IF NOT EXISTS diseases (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
@@ -14,14 +14,13 @@ CREATE TABLE IF NOT EXISTS diseases (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Symptoms table with severity weights
+
 CREATE TABLE IF NOT EXISTS symptoms (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     weight INT DEFAULT 1
 );
 
--- Disease-Symptom mapping (many-to-many)
 CREATE TABLE IF NOT EXISTS disease_symptoms (
     id INT AUTO_INCREMENT PRIMARY KEY,
     disease_id INT,
@@ -31,7 +30,6 @@ CREATE TABLE IF NOT EXISTS disease_symptoms (
     FOREIGN KEY (symptom_id) REFERENCES symptoms(id) ON DELETE CASCADE
 );
 
--- Precautions for each disease
 CREATE TABLE IF NOT EXISTS precautions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     disease_id INT UNIQUE,
@@ -42,7 +40,7 @@ CREATE TABLE IF NOT EXISTS precautions (
     FOREIGN KEY (disease_id) REFERENCES diseases(id) ON DELETE CASCADE
 );
 
--- Doctors table
+
 CREATE TABLE IF NOT EXISTS doctors (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -57,7 +55,6 @@ CREATE TABLE IF NOT EXISTS doctors (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Chat history table
 CREATE TABLE IF NOT EXISTS chat_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
