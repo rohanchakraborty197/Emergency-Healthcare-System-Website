@@ -626,6 +626,395 @@
             }
         }
 
+        /* ==================== BOOKING MODAL ==================== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color-dark);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 560px;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: slideIn 0.35s ease;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 28px 18px;
+            border-bottom: 1px solid var(--border-color-dark);
+        }
+
+        .modal-header h2 {
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-light);
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color-dark);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted-dark);
+            font-size: 1.2em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        .modal-body {
+            padding: 24px 28px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .detail-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .detail-label {
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted-dark);
+            font-weight: 600;
+        }
+
+        .detail-value {
+            font-size: 1em;
+            color: var(--text-light);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color-dark);
+            word-break: break-word;
+        }
+
+        .detail-value.booking-id-val {
+            color: var(--info);
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+        .detail-value .status-badge {
+            font-size: 0.9em;
+        }
+
+        .detail-value .emergency-type {
+            font-size: 0.9em;
+        }
+
+        .detail-notes {
+            min-height: 50px;
+            white-space: pre-wrap;
+            color: var(--text-muted-dark);
+            font-style: italic;
+        }
+
+        .detail-notes:empty::before {
+            content: 'No notes provided';
+            color: var(--text-muted-dark);
+            opacity: 0.5;
+        }
+
+        .modal-footer {
+            padding: 18px 28px;
+            border-top: 1px solid var(--border-color-dark);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .modal-footer .action-btn {
+            padding: 10px 20px;
+            font-size: 0.9em;
+            border-radius: 10px;
+        }
+
+        /* Clickable rows */
+        #bookingsTable tr,
+        #usersTable tr {
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        #bookingsTable tr:hover,
+        #usersTable tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* ==================== NAV TABS ==================== */
+        .nav-tabs {
+            display: flex;
+            gap: 0;
+            background: rgba(22, 33, 62, 0.6);
+            border-bottom: 1px solid var(--border-color-dark);
+            padding: 0 40px;
+        }
+
+        .nav-tab {
+            padding: 14px 28px;
+            background: none;
+            border: none;
+            color: var(--text-muted-dark);
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-light);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .nav-tab.active {
+            color: var(--text-light);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .nav-tab .tab-count {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .nav-tab.active .tab-count {
+            background: rgba(231, 76, 60, 0.3);
+            color: var(--primary-color);
+        }
+
+        /* ==================== USERS SECTION ==================== */
+        .section-view {
+            display: none;
+        }
+
+        .section-view.active {
+            display: block;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85em;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .user-avatar.a {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        .user-avatar.b {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+        }
+
+        .user-avatar.c {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+        }
+
+        .user-avatar.d {
+            background: rgba(155, 89, 182, 0.2);
+            color: #9b59b6;
+        }
+
+        .user-avatar.e {
+            background: rgba(241, 196, 15, 0.2);
+            color: #f1c40f;
+        }
+
+        .user-name-cell {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-email {
+            color: var(--text-muted-dark);
+            font-size: 0.85em;
+        }
+
+        .booking-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(52, 152, 219, 0.15);
+            color: var(--info);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .booking-count.zero {
+            background: rgba(127, 140, 141, 0.15);
+            color: #7f8c8d;
+        }
+
+        /* User Detail Modal extras */
+        .user-detail-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color-dark);
+        }
+
+        .user-detail-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.4em;
+            flex-shrink: 0;
+        }
+
+        .user-detail-info h3 {
+            font-size: 1.2em;
+            color: var(--text-light);
+            margin-bottom: 4px;
+        }
+
+        .user-detail-info p {
+            color: var(--text-muted-dark);
+            font-size: 0.9em;
+        }
+
+        .user-bookings-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .user-booking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color-dark);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .user-booking-item .ub-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .user-booking-item .ub-id {
+            font-weight: 700;
+            color: var(--info);
+            font-size: 0.9em;
+        }
+
+        .user-booking-item .ub-route {
+            font-size: 0.85em;
+            color: var(--text-muted-dark);
+        }
+
+        .user-booking-item .ub-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .user-booking-item .ub-date {
+            font-size: 0.8em;
+            color: var(--text-muted-dark);
+        }
+
+        .no-bookings-msg {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted-dark);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .header {
@@ -644,6 +1033,15 @@
 
             table {
                 min-width: 800px;
+            }
+
+            .nav-tabs {
+                padding: 0 20px;
+            }
+
+            .nav-tab {
+                padding: 12px 16px;
+                font-size: 0.85em;
             }
         }
     </style>
@@ -707,64 +1105,188 @@
             </div>
         </header>
 
+        <!-- Nav Tabs -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" id="tabBookings" onclick="switchTab('bookings')">📋 Bookings <span
+                    class="tab-count" id="tabBookingsCount">-</span></button>
+            <button class="nav-tab" id="tabUsers" onclick="switchTab('users')">👥 Users <span class="tab-count"
+                    id="tabUsersCount">-</span></button>
+        </nav>
+
         <main class="main-content">
-            <!-- Stats Cards -->
-            <div class="stats-grid" id="statsGrid">
-                <div class="stat-card total">
-                    <div class="stat-icon">📊</div>
-                    <div class="value" id="totalBookings">-</div>
-                    <div class="label">Total Bookings</div>
+            <!-- ==================== BOOKINGS VIEW ==================== -->
+            <div class="section-view active" id="bookingsView">
+                <!-- Stats Cards -->
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card total">
+                        <div class="stat-icon">📊</div>
+                        <div class="value" id="totalBookings">-</div>
+                        <div class="label">Total Bookings</div>
+                    </div>
+                    <div class="stat-card pending">
+                        <div class="stat-icon">⏳</div>
+                        <div class="value" id="pendingBookings">-</div>
+                        <div class="label">Pending</div>
+                    </div>
+                    <div class="stat-card dispatched">
+                        <div class="stat-icon">🚑</div>
+                        <div class="value" id="dispatchedBookings">-</div>
+                        <div class="label">Dispatched</div>
+                    </div>
+                    <div class="stat-card completed">
+                        <div class="stat-icon">✅</div>
+                        <div class="value" id="completedBookings">-</div>
+                        <div class="label">Completed</div>
+                    </div>
                 </div>
-                <div class="stat-card pending">
-                    <div class="stat-icon">⏳</div>
-                    <div class="value" id="pendingBookings">-</div>
-                    <div class="label">Pending</div>
+
+                <!-- Bookings Table -->
+                <div class="section-header">
+                    <h2>📋 All Bookings</h2>
+                    <button class="refresh-btn" onclick="loadData()">🔄 Refresh</button>
                 </div>
-                <div class="stat-card dispatched">
-                    <div class="stat-icon">🚑</div>
-                    <div class="value" id="dispatchedBookings">-</div>
-                    <div class="label">Dispatched</div>
-                </div>
-                <div class="stat-card completed">
-                    <div class="stat-icon">✅</div>
-                    <div class="value" id="completedBookings">-</div>
-                    <div class="label">Completed</div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Patient</th>
+                                <th>Phone</th>
+                                <th>Pickup</th>
+                                <th>Destination</th>
+                                <th>Emergency</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookingsTable">
+                            <tr>
+                                <td colspan="9" class="loading-text">Loading bookings</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- Bookings Table -->
-            <div class="section-header">
-                <h2>📋 All Bookings</h2>
-                <button class="refresh-btn" onclick="loadData()">🔄 Refresh</button>
-            </div>
+            <!-- ==================== USERS VIEW ==================== -->
+            <div class="section-view" id="usersView">
+                <div class="section-header">
+                    <h2>👥 Registered Users</h2>
+                    <button class="refresh-btn" onclick="loadUsers()">🔄 Refresh</button>
+                </div>
 
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Patient</th>
-                            <th>Phone</th>
-                            <th>Pickup</th>
-                            <th>Destination</th>
-                            <th>Emergency</th>
-                            <th>Status</th>
-                            <th>Time</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="bookingsTable">
-                        <tr>
-                            <td colspan="9" class="loading-text">Loading bookings</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Total Bookings</th>
+                                <th>Last Activity</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable">
+                            <tr>
+                                <td colspan="5" class="loading-text">Loading users</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </main>
     </div>
 
+    <!-- ==================== BOOKING DETAIL MODAL ==================== -->
+    <div class="modal-overlay" id="bookingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📋 Booking Details</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Booking ID</span>
+                        <div class="detail-value booking-id-val" id="modalBookingId">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Status</span>
+                        <div class="detail-value" id="modalStatus">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Patient Name</span>
+                        <div class="detail-value" id="modalPatient">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Phone</span>
+                        <div class="detail-value" id="modalPhone">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Pickup Location</span>
+                        <div class="detail-value" id="modalPickup">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Destination</span>
+                        <div class="detail-value" id="modalDrop">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Emergency Type</span>
+                        <div class="detail-value" id="modalEmergency">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Booked At</span>
+                        <div class="detail-value" id="modalTime">-</div>
+                    </div>
+                    <div class="detail-item full-width">
+                        <span class="detail-label">Notes</span>
+                        <div class="detail-value detail-notes" id="modalNotes"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" id="modalFooter"></div>
+        </div>
+    </div>
+
+    <!-- ==================== USER DETAIL MODAL ==================== -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>👤 User Details</h2>
+                <button class="modal-close" onclick="closeUserModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="user-detail-header">
+                    <div class="user-detail-avatar" id="userModalAvatar">?</div>
+                    <div class="user-detail-info">
+                        <h3 id="userModalName">-</h3>
+                        <p id="userModalEmail">-</p>
+                    </div>
+                </div>
+                <div class="detail-grid" style="margin-bottom: 24px;">
+                    <div class="detail-item">
+                        <span class="detail-label">User ID</span>
+                        <div class="detail-value booking-id-val" id="userModalId">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Total Bookings</span>
+                        <div class="detail-value" id="userModalBookings">-</div>
+                    </div>
+                </div>
+                <span class="detail-label" style="display:block; margin-bottom: 12px;">Booking History</span>
+                <div class="user-bookings-list" id="userBookingsList">
+                    <div class="loading-text">Loading bookings</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let adminUser = null;
+        let allBookings = [];
+        let allUsers = [];
         window.onload = function () {
             const admin = sessionStorage.getItem('adminUser');
             if (admin) {
@@ -785,6 +1307,7 @@
             document.getElementById('dashboardView').style.display = 'block';
             document.getElementById('adminName').textContent = adminUser.name;
             loadData();
+            loadUsers();
         }
 
         function showError(message) {
@@ -860,6 +1383,7 @@
                     document.getElementById('pendingBookings').textContent = data.stats.pending || 0;
                     document.getElementById('dispatchedBookings').textContent = data.stats.dispatched || 0;
                     document.getElementById('completedBookings').textContent = data.stats.completed || 0;
+                    document.getElementById('tabBookingsCount').textContent = data.stats.total || 0;
                 }
             } catch (error) {
                 console.error('Error loading stats:', error);
@@ -874,8 +1398,9 @@
                 const data = await response.json();
 
                 if (data.success && data.bookings.length > 0) {
+                    allBookings = data.bookings;
                     tbody.innerHTML = data.bookings.map(booking => `
-                        <tr>
+                        <tr onclick="openModal(${booking.id})">
                             <td class="booking-id">#${booking.id}</td>
                             <td>${escapeHtml(booking.patient_name)}</td>
                             <td>${escapeHtml(booking.phone)}</td>
@@ -884,7 +1409,7 @@
                             <td><span class="emergency-type ${booking.emergency_type}">${booking.emergency_type}</span></td>
                             <td><span class="status-badge ${booking.status}">${booking.status}</span></td>
                             <td>${formatDate(booking.created_at)}</td>
-                            <td class="action-btns">
+                            <td class="action-btns" onclick="event.stopPropagation()">
                                 ${getActionButtons(booking)}
                             </td>
                         </tr>
@@ -970,6 +1495,205 @@
                 minute: '2-digit'
             });
         }
+
+        function formatDateFull(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleString('en-IN', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // ==================== MODAL FUNCTIONS ====================
+        function openModal(bookingId) {
+            const booking = allBookings.find(b => b.id === bookingId);
+            if (!booking) return;
+
+            document.getElementById('modalBookingId').textContent = `#${booking.id}`;
+            document.getElementById('modalPatient').textContent = booking.patient_name;
+            document.getElementById('modalPhone').textContent = booking.phone;
+            document.getElementById('modalPickup').textContent = booking.pickup_location;
+            document.getElementById('modalDrop').textContent = booking.drop_location;
+            document.getElementById('modalEmergency').innerHTML = `<span class="emergency-type ${booking.emergency_type}">${booking.emergency_type}</span>`;
+            document.getElementById('modalStatus').innerHTML = `<span class="status-badge ${booking.status}">${booking.status}</span>`;
+            document.getElementById('modalTime').textContent = formatDateFull(booking.created_at);
+            document.getElementById('modalNotes').textContent = booking.notes || '';
+
+            // Build footer action buttons
+            const footer = document.getElementById('modalFooter');
+            if (booking.status === 'completed' || booking.status === 'cancelled') {
+                footer.innerHTML = '';
+            } else {
+                let btns = '';
+                if (booking.status === 'pending') {
+                    btns += `<button class="action-btn dispatch" onclick="updateStatus(${booking.id}, 'dispatched'); closeModal();">🚑 Dispatch</button>`;
+                }
+                if (booking.status === 'dispatched') {
+                    btns += `<button class="action-btn complete" onclick="updateStatus(${booking.id}, 'completed'); closeModal();">✅ Complete</button>`;
+                }
+                if (booking.status !== 'cancelled') {
+                    btns += `<button class="action-btn cancel" onclick="updateStatus(${booking.id}, 'cancelled'); closeModal();">❌ Cancel</button>`;
+                }
+                footer.innerHTML = btns;
+            }
+
+            document.getElementById('bookingModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('bookingModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // Close modal on overlay click
+        document.getElementById('bookingModal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeUserModal();
+            }
+        });
+
+        // ==================== TAB SWITCHING ====================
+        function switchTab(tab) {
+            document.getElementById('tabBookings').classList.toggle('active', tab === 'bookings');
+            document.getElementById('tabUsers').classList.toggle('active', tab === 'users');
+            document.getElementById('bookingsView').classList.toggle('active', tab === 'bookings');
+            document.getElementById('usersView').classList.toggle('active', tab === 'users');
+
+            if (tab === 'users' && allUsers.length === 0) {
+                loadUsers();
+            }
+        }
+
+        // ==================== USER MANAGEMENT ====================
+        function getAvatarClass(name) {
+            const classes = ['a', 'b', 'c', 'd', 'e'];
+            const idx = (name || '').charCodeAt(0) % classes.length;
+            return classes[idx];
+        }
+
+        function getInitials(name) {
+            if (!name) return '?';
+            const parts = name.trim().split(/\s+/);
+            if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+            return parts[0][0].toUpperCase();
+        }
+
+        async function loadUsers() {
+            const tbody = document.getElementById('usersTable');
+            try {
+                const response = await fetch('/admin/users');
+                const data = await response.json();
+
+                if (data.success && data.users.length > 0) {
+                    allUsers = data.users;
+                    document.getElementById('tabUsersCount').textContent = data.users.length;
+
+                    tbody.innerHTML = data.users.map(user => `
+                        <tr onclick="openUserModal(${user.id})">
+                            <td class="booking-id">#${user.id}</td>
+                            <td>
+                                <div class="user-name-cell">
+                                    <span class="user-avatar ${getAvatarClass(user.name)}">${getInitials(user.name)}</span>
+                                    ${escapeHtml(user.name)}
+                                </div>
+                            </td>
+                            <td class="user-email">${escapeHtml(user.email)}</td>
+                            <td><span class="booking-count ${user.total_bookings === 0 ? 'zero' : ''}">${user.total_bookings}</span></td>
+                            <td>${user.last_booking ? formatDate(user.last_booking) : '<span style="color: var(--text-muted-dark);">No activity</span>'}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    allUsers = [];
+                    document.getElementById('tabUsersCount').textContent = '0';
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="empty-state">
+                                <div class="empty-icon">👥</div>
+                                <p>No registered users yet</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-icon">⚠️</div>
+                            <p>Error loading users</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // ==================== USER DETAIL MODAL ====================
+        async function openUserModal(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            const avatarClass = getAvatarClass(user.name);
+            const avatar = document.getElementById('userModalAvatar');
+            avatar.textContent = getInitials(user.name);
+            avatar.className = 'user-detail-avatar user-avatar ' + avatarClass;
+
+            document.getElementById('userModalName').textContent = user.name;
+            document.getElementById('userModalEmail').textContent = user.email;
+            document.getElementById('userModalId').textContent = '#' + user.id;
+            document.getElementById('userModalBookings').textContent = user.total_bookings;
+
+            const listEl = document.getElementById('userBookingsList');
+            listEl.innerHTML = '<div class="loading-text">Loading bookings</div>';
+
+            document.getElementById('userModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+
+            // Fetch user's booking history
+            try {
+                const response = await fetch(`/admin/users/${userId}/bookings`);
+                const data = await response.json();
+
+                if (data.success && data.bookings.length > 0) {
+                    listEl.innerHTML = data.bookings.map(b => `
+                        <div class="user-booking-item">
+                            <div class="ub-left">
+                                <span class="ub-id">#${b.id} — ${escapeHtml(b.patient_name)}</span>
+                                <span class="ub-route">${escapeHtml(b.pickup_location)} → ${escapeHtml(b.drop_location)}</span>
+                            </div>
+                            <div class="ub-right">
+                                <span class="status-badge ${b.status}">${b.status}</span>
+                                <span class="ub-date">${formatDate(b.created_at)}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    listEl.innerHTML = '<div class="no-bookings-msg">📭 No bookings found for this user</div>';
+                }
+            } catch (error) {
+                listEl.innerHTML = '<div class="no-bookings-msg">⚠️ Error loading bookings</div>';
+            }
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // Close user modal on overlay click
+        document.getElementById('userModal').addEventListener('click', function (e) {
+            if (e.target === this) closeUserModal();
+        });
 
         document.addEventListener('keypress', function (e) {
             if (e.key === 'Enter' && document.getElementById('loginView').style.display !== 'none') {

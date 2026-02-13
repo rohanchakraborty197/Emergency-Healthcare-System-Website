@@ -24,7 +24,7 @@ Node.js for backend processing.
 1.  Clone repo:
 
     ``` bash
-    git clone https://github.com/rohanchakraborty197/Collage_Proj.git
+    git clone https://github.com/rohanchakraborty197/College_Proj.git
     cd Collage_Proj
     ```
 

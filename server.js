@@ -292,6 +292,40 @@ app.get("/admin/stats", (req, res) => {
     });
 });
 
+// ✅ GET ALL USERS (for admin user management)
+app.get("/admin/users", (req, res) => {
+    const sql = `
+        SELECT u.id, u.name, u.email, 
+               COUNT(b.id) as total_bookings,
+               MAX(b.created_at) as last_booking
+        FROM users u
+        LEFT JOIN bookings b ON u.id = b.user_id
+        GROUP BY u.id, u.name, u.email
+        ORDER BY u.id DESC
+    `;
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Fetch users error:", err);
+            return res.json({ success: false, message: "Failed to fetch users" });
+        }
+        res.json({ success: true, users: results });
+    });
+});
+
+// ✅ GET SPECIFIC USER'S BOOKINGS (for admin user detail)
+app.get("/admin/users/:userId/bookings", (req, res) => {
+    const { userId } = req.params;
+
+    const sql = "SELECT * FROM bookings WHERE user_id = ? ORDER BY created_at DESC";
+    db.query(sql, [userId], (err, results) => {
+        if (err) {
+            console.error("Fetch user bookings error:", err);
+            return res.json({ success: false, message: "Failed to fetch user bookings" });
+        }
+        res.json({ success: true, bookings: results });
+    });
+});
+
 // ============================================
 // ✅ MEDICAL CHATBOT APIs
 // ============================================
