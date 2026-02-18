@@ -24,9 +24,31 @@
             margin: 0;
             padding: 0;
             font-family: var(--font-family);
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             color: var(--text-color);
             line-height: 1.6;
+        }
+
+        #bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -2;
+            object-fit: cover;
+        }
+
+        #video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.5);
+            /* Semi-transparent overlay to ensure text readability */
+            z-index: -1;
         }
 
         .navbar {
@@ -130,13 +152,15 @@
             -webkit-backdrop-filter: blur(5px);
             backdrop-filter: blur(5px);
             z-index: 1000;
+            overflow-y: auto;
+            padding: 2vh 0;
         }
 
         .modal-content {
             width: 90%;
             max-width: 400px;
             background: white;
-            margin: 10% auto;
+            margin: 0 auto;
             padding: 30px;
             border-radius: 15px;
             box-shadow: var(--shadow);
@@ -378,12 +402,12 @@
             transform: rotate(-45deg) translate(6px, -7px);
         }
 
-        /* Booking Modal Styles */
         .booking-modal .modal-content {
             max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            margin: 5% auto;
+        }
+
+        .appt-modal .modal-content {
+            max-width: 450px;
         }
 
         .booking-modal .submit-btn {
@@ -635,117 +659,424 @@
             transform: none;
         }
 
+
         /* ============================================ */
-        /* MEDICAL CHATBOT WIDGET STYLES */
+        /* DOCTOR APPOINTMENT SECTION STYLES */
         /* ============================================ */
 
-        .chatbot-toggle {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-            font-size: 28px;
-            cursor: pointer;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-            z-index: 1000;
+        .doctors-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8eeff 100%);
+            padding: 60px 20px;
+            margin-top: 0;
+        }
+
+        .doctors-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+
+        .doctors-section .section-subtitle {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 40px;
+        }
+
+        .doctors-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .doctor-card {
+            background: white;
+            border-radius: 18px;
+            width: 270px;
+            padding: 30px 25px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .doctor-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .doctor-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
+        }
+
+        .doctor-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        .chatbot-toggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
-        }
-
-        .chatbot-toggle.active {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-        }
-
-        .chatbot-container {
-            position: fixed;
-            bottom: 110px;
-            right: 30px;
-            width: 400px;
-            height: 520px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-            z-index: 999;
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-            animation: chatSlideIn 0.3s ease;
-        }
-
-        @keyframes chatSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px) scale(0.95);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        .chatbot-container.show {
-            display: flex;
-        }
-
-        .chatbot-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 2.2em;
             color: white;
-            padding: 18px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .chatbot-header-icon {
-            font-size: 28px;
-        }
-
-        .chatbot-header-text h3 {
-            margin: 0;
-            font-size: 16px;
             font-weight: 700;
         }
 
-        .chatbot-header-text p {
-            margin: 2px 0 0 0;
-            font-size: 12px;
-            opacity: 0.9;
+        .doctor-avatar.cardio {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
         }
 
-        .chatbot-messages {
-            flex: 1;
-            padding: 20px;
+        .doctor-avatar.neuro {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .doctor-avatar.ortho {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+
+        .doctor-avatar.pedia {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .doctor-avatar.derma {
+            background: linear-gradient(135deg, #e91e63, #c2185b);
+        }
+
+        .doctor-avatar.ent {
+            background: linear-gradient(135deg, #00bcd4, #0097a7);
+        }
+
+        .doctor-avatar.gyno {
+            background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+        }
+
+        .doctor-avatar.general {
+            background: linear-gradient(135deg, #607d8b, #455a64);
+        }
+
+        .doctor-card h3 {
+            color: var(--text-color);
+            font-size: 1.15em;
+            margin-bottom: 5px;
+        }
+
+        .doctor-specialty {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .doctor-rating {
+            color: #f39c12;
+            font-size: 0.95em;
+            margin-bottom: 8px;
+        }
+
+        .doctor-availability {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .doctor-availability.available {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .doctor-availability.busy {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .book-appt-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .book-appt-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .doctor-experience {
+            color: #888;
+            font-size: 0.85em;
+            margin-bottom: 12px;
+        }
+
+        /* Doctor Appointment Booking Modal */
+        .appt-modal .modal-content {
+            max-width: 500px;
+            max-height: 90vh;
             overflow-y: auto;
+            margin: 5% auto;
+        }
+
+        .appt-modal h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5em;
+        }
+
+        .appt-modal .doctor-selected {
+            background: linear-gradient(135deg, #f0f4ff, #e8eeff);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .appt-modal .input-group {
+            margin-bottom: 18px;
+        }
+
+        .appt-modal select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .appt-modal select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .appt-modal textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 70px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .appt-modal textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .appt-submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            margin-top: 10px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .appt-submit-btn:hover {
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .appt-submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .appt-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+
+        .appt-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .appt-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .doctors-grid {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .doctor-card {
+                width: 90%;
+                max-width: 340px;
+            }
+        }
+
+        /* CHATBOT STYLES */
+        .chat-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .chat-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .chat-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-window {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 320px;
+            height: 450px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1001;
+            border: 1px solid #eee;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: #f9f9f9;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
         }
 
         .chat-message {
-            max-width: 85%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 14px;
-            line-height: 1.5;
-            animation: messageIn 0.3s ease;
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            word-wrap: break-word;
         }
 
-        @keyframes messageIn {
+        .bot-msg {
+            background: white;
+            color: #333;
+            border: 1px solid #eee;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+
+        .user-msg {
+            background: #667eea;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .chat-input-area {
+            padding: 10px;
+            border-top: 1px solid #eee;
+            background: white;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 0.9rem;
+        }
+
+        .chat-send {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .chat-action-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: #ff4757;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
             from {
                 opacity: 0;
                 transform: translateY(10px);
@@ -757,246 +1088,24 @@
             }
         }
 
-        .chat-message.bot {
-            background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
-            color: #333;
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-        }
-
-        .chat-message.user {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-
-        .chat-message.typing {
-            background: #f0f4ff;
-            align-self: flex-start;
-        }
-
-        .typing-dots {
-            display: flex;
-            gap: 4px;
-        }
-
-        .typing-dots span {
-            width: 8px;
-            height: 8px;
-            background: #667eea;
-            border-radius: 50%;
-            animation: typingDot 1.4s infinite ease-in-out;
-        }
-
-        .typing-dots span:nth-child(1) {
-            animation-delay: 0s;
-        }
-
-        .typing-dots span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .typing-dots span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes typingDot {
-
-            0%,
-            60%,
-            100% {
-                transform: translateY(0);
-            }
-
-            30% {
-                transform: translateY(-8px);
-            }
-        }
-
-        .chatbot-input-area {
-            padding: 15px 20px;
-            border-top: 1px solid #eee;
-            display: flex;
-            gap: 10px;
-            background: #fafbfc;
-        }
-
-        .chatbot-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 25px;
-            font-size: 14px;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        .chatbot-input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .chatbot-send {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .chatbot-send:hover {
-            transform: scale(1.1);
-        }
-
-        .chatbot-send:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Symptom tags */
-        .symptoms-matched {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 10px;
-        }
-
-        .symptom-tag {
-            background: rgba(102, 126, 234, 0.15);
-            color: #667eea;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        /* Severity badges */
-        .severity-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin: 8px 0;
-        }
-
-        .severity-badge.minor {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .severity-badge.moderate {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .severity-badge.major {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        /* Doctor cards in chat */
-        .doctor-cards {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .doctor-card-mini {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .doctor-card-mini .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-        }
-
-        .doctor-card-mini .info {
-            flex: 1;
-        }
-
-        .doctor-card-mini .name {
-            font-weight: 600;
-            font-size: 13px;
-            color: #333;
-        }
-
-        .doctor-card-mini .spec {
-            font-size: 11px;
-            color: #666;
-        }
-
-        .doctor-card-mini .rating {
-            color: #f39c12;
-            font-size: 12px;
-        }
-
-        /* Quick symptom buttons */
-        .quick-symptoms {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .quick-symptom-btn {
-            background: white;
-            border: 1px solid #667eea;
-            color: #667eea;
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .quick-symptom-btn:hover {
-            background: #667eea;
-            color: white;
-        }
-
-        @media (max-width: 480px) {
-            .chatbot-container {
-                width: calc(100% - 20px);
-                right: 10px;
-                bottom: 100px;
-                height: 450px;
-            }
-
-            .chatbot-toggle {
-                right: 20px;
-                bottom: 20px;
-            }
+        .chat-message {
+            animation: fadeIn 0.3s ease;
         }
     </style>
 </head>
 
 <body>
 
+    <video autoplay muted loop id="bg-video" poster="ambulance-bg.jpg">
+        <source src="Ambulance_Website_Background_Video.mp4" type="video/mp4">
+    </video>
+    <div id="video-overlay"></div>
+
+
     <!---------------- NAVBAR ---------------->
     <nav class="navbar">
-        <div class="logo"><span class="logo-icon">🚑</span>Ambulance</div>
+        <div class="logo"><img src="website-logo.jpeg" alt="TracknHeal" class="logo-icon"
+                style="height: 40px; border-radius: 5px;">TracknHeal</div>
 
         <div class="hamburger" onclick="toggleMobileMenu()">
             <span></span>
@@ -1009,6 +1118,7 @@
             <li><a href="#booking" onclick="openBookingModal(); closeMobileMenu(); return false;">🚑 Book Ambulance</a>
             </li>
             <li><a href="#services" onclick="closeMobileMenu()">📋 Services</a></li>
+            <li><a href="#doctors" onclick="closeMobileMenu()">🩺 Doctor Appointment</a></li>
             <li><a href="#contact" onclick="closeMobileMenu()">📞 Contact</a></li>
         </ul>
 
@@ -1061,6 +1171,22 @@
                 <h3 style="color: var(--primary-color);">Medical Equipment</h3>
                 <p>Fully equipped ambulances with advanced life support systems.</p>
             </div>
+            <div style="background: var(--secondary-color); padding: 30px; border-radius: 15px; width: 280px; box-shadow: var(--shadow); transition: transform 0.3s ease; cursor: pointer;"
+                onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'"
+                onclick="document.getElementById('doctors').scrollIntoView({behavior: 'smooth'})">
+                <div style="font-size: 3em; margin-bottom: 15px;">🩺</div>
+                <h3 style="color: var(--primary-color);">Doctor Appointment</h3>
+                <p>Book expert consultations with our top-rated specialists.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-------------------- DOCTOR APPOINTMENT SECTION ------------------>
+    <section id="doctors" class="doctors-section">
+        <h2>🩺 Doctor Appointment</h2>
+        <p class="section-subtitle">Book an appointment with our experienced specialists</p>
+        <div class="doctors-grid" id="doctorsGrid">
+            <p style="color: #666; grid-column: 1 / -1; text-align: center;">Loading doctors...</p>
         </div>
     </section>
 
@@ -1213,7 +1339,7 @@
     <div id="historyModal" class="modal history-modal">
         <div class="modal-content">
             <span class="close" onclick="closeHistoryModal()">&times;</span>
-            <h2>📋 My Booking History</h2>
+            <h2>📋 My Bookings & Appointments</h2>
             <div id="historyContent" class="history-list">
                 <div class="history-empty">
                     <div class="icon">⏳</div>
@@ -1223,6 +1349,85 @@
         </div>
     </div>
 
+    <!---------------- DOCTOR APPOINTMENT MODAL ---------------->
+    <div id="apptModal" class="modal appt-modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeApptModal()">&times;</span>
+
+            <h2>🩺 Book Doctor Appointment</h2>
+
+            <div id="apptMessage" class="appt-message"></div>
+
+            <div id="apptForm">
+                <div id="selectedDoctor" class="doctor-selected"></div>
+
+                <div class="input-group">
+                    <label>Your Name *</label>
+                    <input type="text" id="apptPatientName" placeholder="Enter your name" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" id="apptPhone" placeholder="Enter phone number" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Email *</label>
+                    <input type="email" id="apptEmail" placeholder="Enter your email" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Preferred Date *</label>
+                    <input type="date" id="apptDate" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Preferred Time *</label>
+                    <select id="apptTime" required>
+                        <option value="">Select time slot</option>
+                        <option value="09:00 AM">09:00 AM</option>
+                        <option value="10:00 AM">10:00 AM</option>
+                        <option value="11:00 AM">11:00 AM</option>
+                        <option value="12:00 PM">12:00 PM</option>
+                        <option value="02:00 PM">02:00 PM</option>
+                        <option value="03:00 PM">03:00 PM</option>
+                        <option value="04:00 PM">04:00 PM</option>
+                        <option value="05:00 PM">05:00 PM</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Reason for Visit</label>
+                    <textarea id="apptReason" placeholder="Briefly describe your concern..."></textarea>
+                </div>
+
+                <button class="appt-submit-btn" id="apptSubmitBtn" onclick="handleApptBooking()">Confirm
+                    Appointment</button>
+            </div>
+        </div>
+    </div>
+
+    <!---------------- CHATBOT WIDGET ---------------->
+    <div class="chat-widget">
+        <button class="chat-btn" onclick="toggleChat()">🤖</button>
+    </div>
+
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
+            <span>Health Assistant</span>
+            <span style="cursor:pointer;" onclick="toggleChat()">✖</span>
+        </div>
+        <div class="chat-body" id="chatBody">
+            <div class="chat-message bot-msg">
+                Hello! 👋 I'm your AI Health Assistant. Tell me your symptoms, and I'll guide you.
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..."
+                onkeypress="handleChatKeyPress(event)">
+            <button class="chat-send" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
     <!---------------- JS FUNCTIONS ---------------->
     <script>
         // ✅ User session state
@@ -1235,6 +1440,7 @@
                 currentUser = JSON.parse(savedUser);
                 updateAuthUI();
             }
+            loadFrontendDoctors();
         }
 
         // ✅ Update UI based on login status
@@ -1393,6 +1599,74 @@
             document.getElementById("bookingSubmitBtn").classList.remove("loading");
         }
 
+        /* ✅ CHATBOT LOGIC */
+        function toggleChat() {
+            const chatWindow = document.getElementById("chatWindow");
+            const isVisible = chatWindow.style.display === "flex";
+            chatWindow.style.display = isVisible ? "none" : "flex";
+        }
+
+        function handleChatKeyPress(e) {
+            if (e.key === "Enter") sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById("chatInput");
+            const message = input.value.trim();
+            if (!message) return;
+
+            // User Message
+            appendMessage(message, 'user');
+            input.value = "";
+
+            // Bot "Thinking"
+            const typingId = appendMessage("Thinking...", 'bot', true);
+
+            try {
+                const res = await fetch("http://localhost:3000/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message })
+                });
+                const data = await res.json();
+
+                // Remove typing indicator
+                document.getElementById(typingId).remove();
+
+                if (data.success) {
+                    let botReply = data.reply;
+
+                    // Add Action Buttons if valid action
+                    if (data.action === "ambulance") {
+                        botReply += `<br><button class="chat-action-btn" onclick="openBookingModal(); toggleChat();">🚑 Book Ambulance Now</button>`;
+                    } else if (data.action === "doctor") {
+                        botReply += `<br><button class="chat-action-btn" onclick="document.location='#doctors'; toggleChat();" style="background: #2ed573;">🩺 Book Doctor</button>`;
+                    }
+
+                    appendMessage(botReply, 'bot');
+                } else {
+                    appendMessage("Sorry, I encountered an error.", 'bot');
+                }
+
+            } catch (err) {
+                document.getElementById(typingId).remove();
+                appendMessage("Network error. Please try again.", 'bot');
+            }
+        }
+
+        function appendMessage(text, sender, isTyping = false) {
+            const chatBody = document.getElementById("chatBody");
+            const msgDiv = document.createElement("div");
+            msgDiv.className = `chat-message ${sender}-msg`;
+            msgDiv.innerHTML = text;
+            if (isTyping) msgDiv.id = "typing-" + Date.now();
+
+            chatBody.appendChild(msgDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+            return msgDiv.id;
+        }
+
+
         // ✅ Validate booking form
         function validateBookingForm() {
             const patientName = document.getElementById("patientName").value.trim();
@@ -1453,7 +1727,10 @@
                     if (data.success) {
                         document.getElementById("bookingForm").style.display = "none";
                         showBookingMessage(
-                            `✅ ${data.message}<br><br>Your Booking ID: <span class="booking-id">#${data.bookingId}</span><br><br>An ambulance will be dispatched shortly!`,
+                            `✅ ${data.message}<br><br>
+                             Your Booking ID: <span class="booking-id" style="font-size: 1.5em; display: block; margin: 10px 0;">#${data.bookingId}</span>
+                             <br><br>
+                             An ambulance will be dispatched shortly!`,
                             "success"
                         );
                     } else {
@@ -1483,7 +1760,7 @@
             document.getElementById("historyModal").style.display = "none";
         }
 
-        // ✅ Load Booking History
+        // ✅ Load Booking History + Doctor Appointments
         async function loadBookingHistory() {
             const historyContent = document.getElementById("historyContent");
 
@@ -1505,11 +1782,20 @@
             `;
 
             try {
-                const response = await fetch(`/user/bookings/${currentUser.id}`);
-                const data = await response.json();
+                // Fetch both ambulance bookings and doctor appointments in parallel
+                const [bookingsRes, appointmentsRes] = await Promise.all([
+                    fetch(`/user/bookings/${currentUser.id}`).then(r => r.json()).catch(() => ({ success: false })),
+                    fetch(`/user/appointments/${currentUser.id}`).then(r => r.json()).catch(() => ({ success: false }))
+                ]);
 
-                if (data.success && data.bookings.length > 0) {
-                    historyContent.innerHTML = data.bookings.map(booking => `
+                let html = '';
+                const hasBookings = bookingsRes.success && bookingsRes.bookings && bookingsRes.bookings.length > 0;
+                const hasAppointments = appointmentsRes.success && appointmentsRes.appointments && appointmentsRes.appointments.length > 0;
+
+                // === Ambulance Bookings Section ===
+                html += '<h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 1.1em;">🚑 Ambulance Bookings</h3>';
+                if (hasBookings) {
+                    html += bookingsRes.bookings.map(booking => `
                         <div class="history-item" id="booking-${booking.id}">
                             <div class="history-item-header">
                                 <span class="history-item-id">Booking #${booking.id}</span>
@@ -1528,12 +1814,56 @@
                         </div>
                     `).join('');
                 } else {
+                    html += `<div class="history-empty" style="padding: 20px;">
+                        <p style="color: #999; font-size: 0.95em;">No ambulance bookings yet.</p>
+                    </div>`;
+                }
+
+                // === Doctor Appointments Section ===
+                html += '<h3 style="color: #667eea; margin: 25px 0 15px; font-size: 1.1em; border-top: 1px solid #eee; padding-top: 20px;">🩺 Doctor Appointments</h3>';
+                if (hasAppointments) {
+                    html += appointmentsRes.appointments.map(appt => {
+                        const statusColors = {
+                            'pending': '#f39c12',
+                            'confirmed': '#667eea',
+                            'completed': '#27ae60',
+                            'cancelled': '#95a5a6'
+                        };
+                        const statusColor = statusColors[appt.status] || '#999';
+
+                        return `
+                            <div class="history-item" style="border-left: 4px solid ${statusColor};">
+                                <div class="history-item-header">
+                                    <span class="history-item-id">Appointment #${appt.id}</span>
+                                    <span class="history-status ${appt.status}" style="background: ${statusColor}22; color: ${statusColor};">${appt.status}</span>
+                                </div>
+                                <div class="history-item-details">
+                                    <div><span>Doctor:</span> <strong>${escapeHtml(appt.doctor_name)} <span style="font-size:0.85em; color:#666; font-weight:normal;">(${escapeHtml(appt.doctor_degree || '')})</span></strong></div>
+                                    <div><span>Specialty:</span> <strong>${escapeHtml(appt.specialization || '-')}</strong></div>
+                                    <div><span>Date:</span> <strong>${formatDate(appt.appointment_date)}</strong></div>
+                                    <div><span>Time:</span> <strong>${escapeHtml(appt.appointment_time)}</strong></div>
+                                    <div><span>Patient:</span> <strong>${escapeHtml(appt.patient_name)}</strong></div>
+                                    <div><span>Phone:</span> <strong>${escapeHtml(appt.phone || '-')}</strong></div>
+                                </div>
+                                ${appt.reason ? `<div style="margin-top: 8px; font-size: 0.9em; color: #666;"><span>Reason:</span> ${escapeHtml(appt.reason)}</div>` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    html += `<div class="history-empty" style="padding: 20px;">
+                        <p style="color: #999; font-size: 0.95em;">No doctor appointments yet.</p>
+                    </div>`;
+                }
+
+                if (!hasBookings && !hasAppointments) {
                     historyContent.innerHTML = `
                         <div class="history-empty">
                             <div class="icon">📭</div>
-                            <p>No bookings yet. Book your first ambulance!</p>
+                            <p>No bookings or appointments yet.</p>
                         </div>
                     `;
+                } else {
+                    historyContent.innerHTML = html;
                 }
             } catch (error) {
                 historyContent.innerHTML = `
@@ -1614,210 +1944,214 @@
             }
         }
 
+
         // ============================================
-        // ✅ MEDICAL CHATBOT FUNCTIONALITY
+        // DOCTOR APPOINTMENT FUNCTIONS
         // ============================================
 
-        // Toggle chatbot visibility
-        function toggleChatbot() {
-            const container = document.getElementById('chatbotContainer');
-            const toggle = document.getElementById('chatbotToggle');
-            container.classList.toggle('show');
-            toggle.classList.toggle('active');
+        let selectedDoctorName = '';
+        let selectedDoctorSpecialty = '';
+        let selectedDoctorDegree = '';
 
-            if (container.classList.contains('show')) {
-                toggle.innerHTML = '✕';
-                document.getElementById('chatInput').focus();
-            } else {
-                toggle.innerHTML = '💬';
+        // Specialization → avatar color class and icon mapping
+        function getDoctorAvatarInfo(specialization) {
+            const spec = (specialization || '').toLowerCase();
+            const map = {
+                'cardiologist': { cls: 'cardio', icon: '❤️' },
+                'cardiology': { cls: 'cardio', icon: '❤️' },
+                'neurologist': { cls: 'neuro', icon: '🧠' },
+                'neurology': { cls: 'neuro', icon: '🧠' },
+                'orthopedic': { cls: 'ortho', icon: '🦴' },
+                'orthopedic surgeon': { cls: 'ortho', icon: '🦴' },
+                'pediatrician': { cls: 'pedia', icon: '👶' },
+                'pediatrics': { cls: 'pedia', icon: '👶' },
+                'dermatologist': { cls: 'derma', icon: '🧑‍⚕️' },
+                'dermatology': { cls: 'derma', icon: '🧑‍⚕️' },
+                'ent specialist': { cls: 'ent', icon: '👂' },
+                'ent': { cls: 'ent', icon: '👂' },
+                'gynecologist': { cls: 'gyno', icon: '🫀' },
+                'gynecology': { cls: 'gyno', icon: '🫀' },
+                'general physician': { cls: 'general', icon: '🩺' },
+                'general': { cls: 'general', icon: '🩺' }
+            };
+            for (const [key, val] of Object.entries(map)) {
+                if (spec.includes(key)) return val;
+            }
+            return { cls: 'general', icon: '🩺' };
+        }
+
+        // Generate star rating HTML
+        function getStarRating(rating) {
+            const r = parseFloat(rating) || 0;
+            const full = Math.floor(r);
+            let stars = '⭐'.repeat(Math.min(full, 5));
+            return stars + ' ' + r.toFixed(1);
+        }
+
+        // Load doctors from backend API
+        async function loadFrontendDoctors() {
+            const grid = document.getElementById('doctorsGrid');
+            try {
+                const response = await fetch('http://localhost:3000/doctors');
+                const data = await response.json();
+
+                if (data.success && data.doctors && data.doctors.length > 0) {
+                    grid.innerHTML = data.doctors.map(doc => {
+                        const avatar = getDoctorAvatarInfo(doc.specialization);
+                        const availDays = doc.available_days || 'Mon-Fri';
+                        const availTime = doc.available_time || '9:00 AM - 5:00 PM';
+                        const escapedName = (doc.name || '').replace(/'/g, "\\'");
+                        const escapedSpec = (doc.specialization || '').replace(/'/g, "\\'");
+
+                        return `
+                            <div class="doctor-card">
+                                <div class="doctor-avatar ${avatar.cls}">${avatar.icon}</div>
+                                <h3>${doc.name}</h3>
+                                <p style="font-size: 0.9em; color: #666; margin-bottom: 5px;">${doc.degree || ''}</p>
+                                <p class="doctor-specialty">${doc.specialization}</p>
+                                <p class="doctor-rating">${getStarRating(doc.rating)}</p>
+                                <p class="doctor-experience">${doc.hospital || ''}</p>
+                                <span class="doctor-availability available">● ${availDays} | ${availTime}</span>
+                                <br><br>
+                                <button class="book-appt-btn" onclick="openApptModal('${escapedName}', '${escapedSpec}', '${doc.degree ? doc.degree.replace(/'/g, "\\'") : ''}')">Book Appointment</button>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    grid.innerHTML = '<p style="color: #666; grid-column: 1 / -1; text-align: center;">No doctors available at the moment. Please check back later.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading doctors:', error);
+                grid.innerHTML = '<p style="color: #999; grid-column: 1 / -1; text-align: center;">Unable to load doctors. Please try again later.</p>';
             }
         }
 
-        // Send message to chatbot
-        async function sendChatMessage() {
-            const input = document.getElementById('chatInput');
-            const message = input.value.trim();
-
-            if (!message) return;
-
-            const messagesContainer = document.getElementById('chatMessages');
-
-            // Add user message
-            addChatMessage(message, 'user');
-            input.value = '';
-
-            // Show typing indicator
-            const typingHtml = `
-                <div class="chat-message typing" id="typingIndicator">
-                    <div class="typing-dots">
-                        <span></span><span></span><span></span>
-                    </div>
-                </div>
+        // Open appointment modal
+        function openApptModal(doctorName, specialty, degree) {
+            if (!currentUser) {
+                document.getElementById('loginRequiredModal').style.display = 'block';
+                return;
+            }
+            selectedDoctorName = doctorName;
+            selectedDoctorSpecialty = specialty;
+            selectedDoctorDegree = degree || '';
+            document.getElementById('selectedDoctor').innerHTML = `
+                <div style="font-size: 1.3em; margin-bottom: 5px;">🩺 ${doctorName} <span style="font-size:0.8em; opacity:0.8;">(${selectedDoctorDegree})</span></div>
+                <div style="font-size: 0.9em; opacity: 0.8;">${specialty}</div>
             `;
-            messagesContainer.insertAdjacentHTML('beforeend', typingHtml);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('apptDate').setAttribute('min', today);
+            // Pre-fill name and email if logged in
+            if (currentUser) {
+                document.getElementById('apptPatientName').value = currentUser.name || '';
+                document.getElementById('apptEmail').value = currentUser.email || '';
+            }
+            document.getElementById('apptModal').style.display = 'block';
+        }
+
+        // Close appointment modal
+        function closeApptModal() {
+            document.getElementById('apptModal').style.display = 'none';
+            resetApptForm();
+        }
+
+        // Reset appointment form
+        function resetApptForm() {
+            document.getElementById('apptPatientName').value = '';
+            document.getElementById('apptPhone').value = '';
+            document.getElementById('apptEmail').value = '';
+            document.getElementById('apptDate').value = '';
+            document.getElementById('apptTime').value = '';
+            document.getElementById('apptReason').value = '';
+            document.getElementById('apptMessage').className = 'appt-message';
+            document.getElementById('apptMessage').innerHTML = '';
+            document.getElementById('apptForm').style.display = 'block';
+            document.getElementById('apptSubmitBtn').disabled = false;
+        }
+
+        // Handle appointment booking submit
+        async function handleApptBooking() {
+            const name = document.getElementById('apptPatientName').value.trim();
+            const phone = document.getElementById('apptPhone').value.trim();
+            const email = document.getElementById('apptEmail').value.trim();
+            const date = document.getElementById('apptDate').value;
+            const time = document.getElementById('apptTime').value;
+            const reason = document.getElementById('apptReason').value.trim();
+
+            if (!name || !phone || !email || !date || !time) {
+                showApptMessage('Please fill in all required fields.', 'error');
+                return;
+            }
+
+            // Phone validation
+            if (!/^[0-9]{10}$/.test(phone.replace(/[\s-]/g, ''))) {
+                showApptMessage('Please enter a valid 10-digit phone number.', 'error');
+                return;
+            }
+
+            const submitBtn = document.getElementById('apptSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Booking...';
 
             try {
-                const userId = currentUser ? currentUser.id : null;
-
-                const response = await fetch('/chatbot/analyze', {
+                const response = await fetch('http://localhost:3000/appointments', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId, message })
+                    body: JSON.stringify({
+                        userId: currentUser ? currentUser.id : null,
+                        doctorName: selectedDoctorName,
+                        specialization: selectedDoctorSpecialty,
+                        doctorDegree: selectedDoctorDegree,
+                        patientName: name,
+                        phone: phone,
+                        email: email,
+                        appointmentDate: date,
+                        appointmentTime: time,
+                        reason: reason
+                    })
                 });
 
                 const data = await response.json();
 
-                // Remove typing indicator
-                document.getElementById('typingIndicator')?.remove();
-
                 if (data.success) {
-                    displayChatbotResponse(data);
+                    showApptMessage(
+                        `✅ Appointment booked successfully!<br><br>` +
+                        `<span style="font-size: 1.1em; font-weight: 700; color: #667eea;">Appointment ID: #${data.appointmentId}</span><br><br>` +
+                        `<strong>Doctor:</strong> ${selectedDoctorName} (${selectedDoctorDegree})<br>` +
+                        `<strong>Specialty:</strong> ${selectedDoctorSpecialty}<br>` +
+                        `<strong>Date:</strong> ${date}<br>` +
+                        `<strong>Time:</strong> ${time}<br><br>` +
+                        `<em>You will receive a confirmation on ${email}</em>`,
+                        'success'
+                    );
+                    document.getElementById('apptForm').style.display = 'none';
                 } else {
-                    addChatMessage(data.message || 'Sorry, something went wrong. Please try again.', 'bot');
+                    showApptMessage(data.message || 'Failed to book appointment. Please try again.', 'error');
                 }
             } catch (error) {
-                document.getElementById('typingIndicator')?.remove();
-                addChatMessage('Network error. Please check your connection and try again.', 'bot');
+                console.error('Booking error:', error);
+                showApptMessage('Network error. Please check your connection and try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Confirm Appointment';
             }
         }
 
-        // Add a message to the chat
-        function addChatMessage(text, type) {
-            const messagesContainer = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `chat-message ${type}`;
-            messageDiv.textContent = text;
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        // Show appointment message
+        function showApptMessage(msg, type) {
+            const msgEl = document.getElementById('apptMessage');
+            msgEl.innerHTML = msg;
+            msgEl.className = 'appt-message ' + type;
         }
 
-        // Display chatbot response with rich formatting
-        function displayChatbotResponse(data) {
-            const messagesContainer = document.getElementById('chatMessages');
-
-            let html = '<div class="chat-message bot">';
-
-            if (data.prediction) {
-                // Disease prediction found
-                html += `<strong>🔍 Possible Condition:</strong> ${data.prediction.disease}<br><br>`;
-                html += `<span class="severity-badge ${data.prediction.severity}">${data.prediction.severity}</span><br><br>`;
-
-                if (data.prediction.description) {
-                    html += `<strong>About:</strong> ${data.prediction.description.substring(0, 150)}...<br><br>`;
-                }
-
-                if (data.prediction.precautions && data.prediction.precautions.length > 0) {
-                    html += '<strong>⚕️ Precautions:</strong><br>';
-                    data.prediction.precautions.forEach((p, i) => {
-                        html += `${i + 1}. ${p}<br>`;
-                    });
-                    html += '<br>';
-                }
-
-                if (data.prediction.severity === 'major') {
-                    html += '<strong style="color:#e74c3c">⚠️ This condition requires immediate medical attention!</strong><br><br>';
-                }
-
-                // Show matched symptoms
-                if (data.matchedSymptoms && data.matchedSymptoms.length > 0) {
-                    html += '<div class="symptoms-matched">';
-                    html += '<strong>Matched symptoms: </strong>';
-                    data.matchedSymptoms.forEach(s => {
-                        html += `<span class="symptom-tag">${s}</span>`;
-                    });
-                    html += '</div>';
-                }
-
-                // Show recommended doctors
-                if (data.doctors && data.doctors.length > 0) {
-                    html += '<div class="doctor-cards"><strong>👨‍⚕️ Recommended Doctors:</strong>';
-                    data.doctors.slice(0, 2).forEach(doc => {
-                        html += `
-                            <div class="doctor-card-mini">
-                                <div class="avatar">${doc.name.charAt(0)}</div>
-                                <div class="info">
-                                    <div class="name">${doc.name}</div>
-                                    <div class="spec">${doc.specialization} • ${doc.hospital || 'Available'}</div>
-                                </div>
-                                <div class="rating">⭐ ${doc.rating}</div>
-                            </div>
-                        `;
-                    });
-                    html += '</div>';
-                }
-            } else {
-                // No prediction - show helpful message
-                html += data.response || "I couldn't identify specific symptoms. Please describe your symptoms more clearly.";
-                html += `<div class="quick-symptoms">
-                    <strong>Try describing:</strong><br>
-                    <button class="quick-symptom-btn" onclick="setQuickSymptom('I have fever and headache')">fever, headache</button>
-                    <button class="quick-symptom-btn" onclick="setQuickSymptom('I have skin rash and itching')">skin rash, itching</button>
-                    <button class="quick-symptom-btn" onclick="setQuickSymptom('I have cough and breathing difficulty')">cough, breathing</button>
-                </div>`;
-            }
-
-            html += '</div>';
-
-            messagesContainer.insertAdjacentHTML('beforeend', html);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-
-        // Set quick symptom in input
-        function setQuickSymptom(text) {
-            document.getElementById('chatInput').value = text;
-            document.getElementById('chatInput').focus();
-        }
-
-        // Handle Enter key in chat input
-        document.addEventListener('DOMContentLoaded', function () {
-            const chatInput = document.getElementById('chatInput');
-            if (chatInput) {
-                chatInput.addEventListener('keypress', function (e) {
-                    if (e.key === 'Enter') {
-                        sendChatMessage();
-                    }
-                });
+        // Close appointment modal on outside click
+        window.addEventListener('click', function (event) {
+            if (event.target === document.getElementById('apptModal')) {
+                closeApptModal();
             }
         });
     </script>
-
-    <!-- ============================================ -->
-    <!-- MEDICAL CHATBOT WIDGET -->
-    <!-- ============================================ -->
-
-    <button class="chatbot-toggle" id="chatbotToggle" onclick="toggleChatbot()">💬</button>
-
-    <div class="chatbot-container" id="chatbotContainer">
-        <div class="chatbot-header">
-            <span class="chatbot-header-icon">🩺</span>
-            <div class="chatbot-header-text">
-                <h3>Medical Assistant</h3>
-                <p>Describe your symptoms for guidance</p>
-            </div>
-        </div>
-
-        <div class="chatbot-messages" id="chatMessages">
-            <div class="chat-message bot">
-                👋 Hello! I'm your medical assistant. Describe your symptoms and I'll help identify possible conditions
-                and recommend precautions.
-                <div class="quick-symptoms">
-                    <strong>Quick examples:</strong><br>
-                    <button class="quick-symptom-btn" onclick="setQuickSymptom('I have high fever and headache')">fever
-                        & headache</button>
-                    <button class="quick-symptom-btn"
-                        onclick="setQuickSymptom('I have stomach pain and nausea')">stomach issues</button>
-                    <button class="quick-symptom-btn" onclick="setQuickSymptom('I have skin rash and itching')">skin
-                        problems</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="chatbot-input-area">
-            <input type="text" id="chatInput" class="chatbot-input" placeholder="Describe your symptoms..." />
-            <button class="chatbot-send" onclick="sendChatMessage()">➤</button>
-        </div>
-    </div>
 
 </body>
 

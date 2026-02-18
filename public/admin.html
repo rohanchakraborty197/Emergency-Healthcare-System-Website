@@ -1015,6 +1015,278 @@
             color: var(--text-muted-dark);
         }
 
+        /* ==================== APPOINTMENTS SECTION ==================== */
+        .appt-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .appt-stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color-dark);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .appt-stat-card .appt-stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--text-light);
+        }
+
+        .appt-stat-card .appt-stat-label {
+            font-size: 0.85em;
+            color: var(--text-muted-dark);
+            margin-top: 4px;
+        }
+
+        .appt-stat-card.appt-total {
+            border-left: 4px solid var(--info);
+        }
+
+        .appt-stat-card.appt-pending {
+            border-left: 4px solid var(--warning);
+        }
+
+        .appt-stat-card.appt-confirmed {
+            border-left: 4px solid #667eea;
+        }
+
+        .appt-stat-card.appt-completed {
+            border-left: 4px solid var(--success);
+        }
+
+        .appt-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .appt-status.pending {
+            background: rgba(243, 156, 18, 0.15);
+            color: #f39c12;
+        }
+
+        .appt-status.confirmed {
+            background: rgba(102, 126, 234, 0.15);
+            color: #667eea;
+        }
+
+        .appt-status.completed {
+            background: rgba(39, 174, 96, 0.15);
+            color: #27ae60;
+        }
+
+        .appt-status.cancelled {
+            background: rgba(149, 165, 166, 0.15);
+            color: #95a5a6;
+        }
+
+        /* ==================== DOCTORS SECTION ==================== */
+        #doctorsTable tr {
+            cursor: default;
+        }
+
+        .doctor-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .doctor-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(52, 152, 219, 0.15);
+            color: var(--info);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            flex-shrink: 0;
+        }
+
+        .doctor-spec {
+            font-size: 0.8em;
+            color: var(--text-muted-dark);
+        }
+
+        .rating-stars {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #f1c40f;
+            font-size: 0.9em;
+        }
+
+        .rating-value {
+            color: var(--text-light);
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        .avail-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            background: rgba(46, 204, 113, 0.15);
+            color: #2ecc71;
+        }
+
+        .add-doctor-btn {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .add-doctor-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        /* Doctor Form Modal */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted-dark);
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color-dark);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: var(--text-light);
+            font-size: 0.95em;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        .form-group select option {
+            background: #1a1a2e;
+            color: var(--text-light);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-save {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-cancel-form {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted-dark);
+            border: 1px solid var(--border-color-dark);
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cancel-form:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+        }
+
+        .delete-btn-small {
+            background: rgba(231, 76, 60, 0.15);
+            color: #e74c3c;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn-small:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .edit-btn-small {
+            background: rgba(52, 152, 219, 0.15);
+            color: #3498db;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn-small:hover {
+            background: #3498db;
+            color: white;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .header {
@@ -1053,7 +1325,8 @@
         <div class="login-container">
             <div class="login-card">
                 <div class="logo">
-                    <span class="logo-icon">🛡️</span>
+                    <img src="website-logo.jpeg" class="logo-icon"
+                        style="height: 64px; width: auto; margin: 0 auto 15px;">
                     <h1>Admin Portal</h1>
                     <p>TrackNHeal Management System</p>
                 </div>
@@ -1096,7 +1369,7 @@
     <div class="dashboard-view" id="dashboardView">
         <header class="header">
             <div class="header-left">
-                <span>🚑</span>
+                <img src="website-logo.jpeg" style="height: 32px; width: auto;">
                 <h1>TrackNHeal Admin</h1>
             </div>
             <div class="header-right">
@@ -1111,6 +1384,10 @@
                     class="tab-count" id="tabBookingsCount">-</span></button>
             <button class="nav-tab" id="tabUsers" onclick="switchTab('users')">👥 Users <span class="tab-count"
                     id="tabUsersCount">-</span></button>
+            <button class="nav-tab" id="tabDoctors" onclick="switchTab('doctors')">🩺 Doctors <span class="tab-count"
+                    id="tabDoctorsCount">-</span></button>
+            <button class="nav-tab" id="tabAppointments" onclick="switchTab('appointments')">📅 Appointments <span
+                    class="tab-count" id="tabAppointmentsCount">-</span></button>
         </nav>
 
         <main class="main-content">
@@ -1191,6 +1468,86 @@
                         <tbody id="usersTable">
                             <tr>
                                 <td colspan="5" class="loading-text">Loading users</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ==================== DOCTORS VIEW ==================== -->
+            <div class="section-view" id="doctorsView">
+                <div class="section-header">
+                    <h2>🩺 Doctors</h2>
+                    <div style="display:flex; gap:10px;">
+                        <button class="refresh-btn" onclick="loadDoctors()">🔄 Refresh</button>
+                        <button class="add-doctor-btn" onclick="openDoctorForm()">➕ Add Doctor</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Doctor</th>
+                                <th>Hospital</th>
+                                <th>Contact</th>
+                                <th>Availability</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="doctorsTable">
+                            <tr>
+                                <td colspan="6" class="loading-text">Loading doctors</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ==================== APPOINTMENTS VIEW ==================== -->
+            <div class="section-view" id="appointmentsView">
+                <!-- Appointment Stats -->
+                <div class="appt-stats-grid" id="apptStatsGrid">
+                    <div class="appt-stat-card appt-total">
+                        <div class="appt-stat-value" id="apptTotalCount">-</div>
+                        <div class="appt-stat-label">Total Appointments</div>
+                    </div>
+                    <div class="appt-stat-card appt-pending">
+                        <div class="appt-stat-value" id="apptPendingCount">-</div>
+                        <div class="appt-stat-label">Pending</div>
+                    </div>
+                    <div class="appt-stat-card appt-confirmed">
+                        <div class="appt-stat-value" id="apptConfirmedCount">-</div>
+                        <div class="appt-stat-label">Confirmed</div>
+                    </div>
+                    <div class="appt-stat-card appt-completed">
+                        <div class="appt-stat-value" id="apptCompletedCount">-</div>
+                        <div class="appt-stat-label">Completed</div>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h2>📅 Doctor Appointments</h2>
+                    <button class="refresh-btn" onclick="loadAppointments()">🔄 Refresh</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Patient</th>
+                                <th>Doctor</th>
+                                <th>Date & Time</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointmentsTable">
+                            <tr>
+                                <td colspan="7" class="loading-text">Loading appointments</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1283,10 +1640,63 @@
         </div>
     </div>
 
+    <!-- ==================== DOCTOR FORM MODAL ==================== -->
+    <div class="modal-overlay" id="doctorFormModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="doctorFormTitle">➕ Add Doctor</h2>
+                <button class="modal-close" onclick="closeDoctorForm()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="doctorFormId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Doctor Name *</label>
+                        <input type="text" id="dfName" placeholder="Dr. Full Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Specialization *</label>
+                        <input type="text" id="dfSpec" placeholder="e.g. Cardiologist">
+                    </div>
+                    <div class="form-group">
+                        <label>Degree</label>
+                        <input type="text" id="dfDegree" placeholder="e.g. MBBS, MD">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Hospital</label>
+                        <input type="text" id="dfHospital" placeholder="Hospital / Clinic name">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="text" id="dfPhone" placeholder="Phone number">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="dfEmail" placeholder="email@hospital.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Available Days</label>
+                        <input type="text" id="dfDays" placeholder="Mon-Fri" value="Mon-Fri">
+                    </div>
+                    <div class="form-group">
+                        <label>Available Time</label>
+                        <input type="text" id="dfTime" placeholder="9:00 AM - 5:00 PM" value="9:00 AM - 5:00 PM">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-cancel-form" onclick="closeDoctorForm()">Cancel</button>
+                    <button class="btn-save" onclick="saveDoctor()">💾 Save Doctor</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let adminUser = null;
         let allBookings = [];
         let allUsers = [];
+        let allDoctors = [];
+        let allAppointments = [];
         window.onload = function () {
             const admin = sessionStorage.getItem('adminUser');
             if (admin) {
@@ -1308,6 +1718,8 @@
             document.getElementById('adminName').textContent = adminUser.name;
             loadData();
             loadUsers();
+            loadDoctors();
+            loadAppointments();
         }
 
         function showError(message) {
@@ -1518,6 +1930,20 @@
             document.getElementById('modalPhone').textContent = booking.phone;
             document.getElementById('modalPickup').textContent = booking.pickup_location;
             document.getElementById('modalDrop').textContent = booking.drop_location;
+
+            // Show doctor info if available (for appointments)
+            if (booking.doctor_name) {
+                const docInfo = `🩺 ${booking.doctor_name} <span style="font-size:0.9em; opacity:0.8;">(${booking.doctor_degree || ''})</span>`;
+                // You might need to add a safe place to show this in the modal if it's reused for ambulance
+                // Checking if there's a slot or just appending to notes for now if structure is rigid,
+                // BUT looking at the modal HTML, it seems originally designed for ambulance bookings (pickup/drop).
+                // Let's check where appointments are actually shown. Ah, appointments have their own table but might use a different modal or the same?
+                // Wait, `loadAppointments` uses `getApptActions` but there's no `openModal` call in the appointment table row in the original code? 
+                // Let's re-read `admin.html` carefully. 
+                // In `loadAppointments` (lines 2300+), the table row does NOT have an onclick handler in the original file I viewed.
+                // It just shows data. 
+                // Let's double check line 2323 in `admin.html`.
+            }
             document.getElementById('modalEmergency').innerHTML = `<span class="emergency-type ${booking.emergency_type}">${booking.emergency_type}</span>`;
             document.getElementById('modalStatus').innerHTML = `<span class="status-badge ${booking.status}">${booking.status}</span>`;
             document.getElementById('modalTime').textContent = formatDateFull(booking.created_at);
@@ -1560,6 +1986,7 @@
             if (e.key === 'Escape') {
                 closeModal();
                 closeUserModal();
+                closeDoctorForm();
             }
         });
 
@@ -1567,11 +1994,21 @@
         function switchTab(tab) {
             document.getElementById('tabBookings').classList.toggle('active', tab === 'bookings');
             document.getElementById('tabUsers').classList.toggle('active', tab === 'users');
+            document.getElementById('tabDoctors').classList.toggle('active', tab === 'doctors');
+            document.getElementById('tabAppointments').classList.toggle('active', tab === 'appointments');
             document.getElementById('bookingsView').classList.toggle('active', tab === 'bookings');
             document.getElementById('usersView').classList.toggle('active', tab === 'users');
+            document.getElementById('doctorsView').classList.toggle('active', tab === 'doctors');
+            document.getElementById('appointmentsView').classList.toggle('active', tab === 'appointments');
 
             if (tab === 'users' && allUsers.length === 0) {
                 loadUsers();
+            }
+            if (tab === 'doctors' && allDoctors.length === 0) {
+                loadDoctors();
+            }
+            if (tab === 'appointments' && allAppointments.length === 0) {
+                loadAppointments();
             }
         }
 
@@ -1694,6 +2131,285 @@
         document.getElementById('userModal').addEventListener('click', function (e) {
             if (e.target === this) closeUserModal();
         });
+
+        // ==================== DOCTOR MANAGEMENT ====================
+        function renderStars(rating) {
+            const r = parseFloat(rating) || 0;
+            const full = Math.floor(r);
+            const half = r % 1 >= 0.3 ? 1 : 0;
+            let stars = '★'.repeat(full);
+            if (half) stars += '½';
+            return `<span class="rating-stars">${stars}<span class="rating-value">${r.toFixed(1)}</span></span>`;
+        }
+
+        async function loadDoctors() {
+            const tbody = document.getElementById('doctorsTable');
+            try {
+                const response = await fetch('/admin/doctors');
+                const data = await response.json();
+
+                if (data.success && data.doctors.length > 0) {
+                    allDoctors = data.doctors;
+                    document.getElementById('tabDoctorsCount').textContent = data.doctors.length;
+
+                    tbody.innerHTML = data.doctors.map(doc => `
+                        <tr>
+                            <td class="booking-id">#${doc.id}</td>
+                            <td>
+                                <div class="doctor-name-cell">
+                                    <div class="doctor-icon">🩺</div>
+                                    <div>
+                                        <div>${escapeHtml(doc.name)} <span style="font-size:0.85em; color:var(--text-muted-dark); font-weight:normal;">(${escapeHtml(doc.degree || '')})</span></div>
+                                        <div class="doctor-spec">${escapeHtml(doc.specialization)}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${doc.hospital ? escapeHtml(doc.hospital) : '<span style="color:var(--text-muted-dark)">—</span>'}</td>
+                            <td>
+                                ${doc.phone ? '<div>' + escapeHtml(doc.phone) + '</div>' : ''}
+                                ${doc.email ? '<div class="user-email">' + escapeHtml(doc.email) + '</div>' : ''}
+                            </td>
+                            <td>
+                                <span class="avail-badge">${escapeHtml(doc.available_days || 'Mon-Fri')}</span>
+                                <div style="font-size:0.8em; color:var(--text-muted-dark); margin-top:4px;">${escapeHtml(doc.available_time || '9-5')}</div>
+                            </td>
+                            <td>
+                                <div style="display:flex; gap:6px;">
+                                    <button class="edit-btn-small" onclick="openDoctorForm(${doc.id})">✏️ Edit</button>
+                                    <button class="delete-btn-small" onclick="deleteDoctor(${doc.id}, '${escapeHtml(doc.name).replace(/'/g, "\\'")}')">🗑️</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    allDoctors = [];
+                    document.getElementById('tabDoctorsCount').textContent = '0';
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <div class="empty-icon">🩺</div>
+                                <p>No doctors found. Add one!</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading doctors:', error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-icon">⚠️</div>
+                            <p>Error loading doctors</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function openDoctorForm(doctorId) {
+            if (doctorId) {
+                // Edit mode
+                const doc = allDoctors.find(d => d.id === doctorId);
+                if (!doc) return;
+                document.getElementById('doctorFormTitle').textContent = '✏️ Edit Doctor';
+                document.getElementById('doctorFormId').value = doc.id;
+                document.getElementById('dfName').value = doc.name || '';
+                document.getElementById('dfSpec').value = doc.specialization || '';
+                document.getElementById('dfDegree').value = doc.degree || '';
+                document.getElementById('dfHospital').value = doc.hospital || '';
+                document.getElementById('dfPhone').value = doc.phone || '';
+                document.getElementById('dfEmail').value = doc.email || '';
+                document.getElementById('dfDays').value = doc.available_days || 'Mon-Fri';
+                document.getElementById('dfTime').value = doc.available_time || '9:00 AM - 5:00 PM';
+            } else {
+                // Add mode
+                document.getElementById('doctorFormTitle').textContent = '➕ Add Doctor';
+                document.getElementById('doctorFormId').value = '';
+                document.getElementById('dfName').value = '';
+                document.getElementById('dfSpec').value = '';
+                document.getElementById('dfDegree').value = '';
+                document.getElementById('dfHospital').value = '';
+                document.getElementById('dfPhone').value = '';
+                document.getElementById('dfEmail').value = '';
+                document.getElementById('dfDays').value = 'Mon-Fri';
+                document.getElementById('dfTime').value = '9:00 AM - 5:00 PM';
+            }
+
+            document.getElementById('doctorFormModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDoctorForm() {
+            document.getElementById('doctorFormModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        async function saveDoctor() {
+            const name = document.getElementById('dfName').value.trim();
+            const specialization = document.getElementById('dfSpec').value.trim();
+
+            if (!name || !specialization) {
+                alert('Doctor name and specialization are required!');
+                return;
+            }
+
+            const payload = {
+                name,
+                specialization,
+                degree: document.getElementById('dfDegree').value.trim(),
+                hospital: document.getElementById('dfHospital').value.trim(),
+                phone: document.getElementById('dfPhone').value.trim(),
+                email: document.getElementById('dfEmail').value.trim(),
+                available_days: document.getElementById('dfDays').value.trim(),
+                available_time: document.getElementById('dfTime').value.trim(),
+            };
+
+            const editId = document.getElementById('doctorFormId').value;
+            const isEdit = !!editId;
+
+            try {
+                const url = isEdit ? `/admin/doctors/${editId}` : '/admin/doctors';
+                const method = isEdit ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    closeDoctorForm();
+                    loadDoctors();
+                } else {
+                    alert(data.message || 'Failed to save doctor');
+                }
+            } catch (error) {
+                alert('Error saving doctor');
+            }
+        }
+
+        async function deleteDoctor(doctorId, doctorName) {
+            if (!confirm(`Delete Doctor "${doctorName}"? This action cannot be undone.`)) return;
+
+            try {
+                const response = await fetch(`/admin/doctors/${doctorId}`, { method: 'DELETE' });
+                const data = await response.json();
+                if (data.success) {
+                    loadDoctors();
+                } else {
+                    alert(data.message || 'Failed to delete doctor');
+                }
+            } catch (error) {
+                alert('Error deleting doctor');
+            }
+        }
+
+        // Close doctor form modal on overlay click
+        document.getElementById('doctorFormModal').addEventListener('click', function (e) {
+            if (e.target === this) closeDoctorForm();
+        });
+
+        // ==================== APPOINTMENT MANAGEMENT ====================
+        async function loadAppointments() {
+            const tbody = document.getElementById('appointmentsTable');
+            try {
+                // Load stats and appointments in parallel
+                const [statsRes, apptRes] = await Promise.all([
+                    fetch('/admin/appointment-stats'),
+                    fetch('/admin/appointments')
+                ]);
+                const statsData = await statsRes.json();
+                const apptData = await apptRes.json();
+
+                // Update stats cards
+                if (statsData.success) {
+                    document.getElementById('apptTotalCount').textContent = statsData.stats.total || 0;
+                    document.getElementById('apptPendingCount').textContent = statsData.stats.pending || 0;
+                    document.getElementById('apptConfirmedCount').textContent = statsData.stats.confirmed || 0;
+                    document.getElementById('apptCompletedCount').textContent = statsData.stats.completed || 0;
+                    document.getElementById('tabAppointmentsCount').textContent = statsData.stats.total || 0;
+                }
+
+                if (apptData.success && apptData.appointments.length > 0) {
+                    allAppointments = apptData.appointments;
+                    tbody.innerHTML = apptData.appointments.map(appt => `
+                        <tr>
+                            <td class="booking-id">#${appt.id}</td>
+                            <td>
+                                <div>${escapeHtml(appt.patient_name)}</div>
+                                <div style="font-size:0.8em; color:var(--text-muted-dark)">${escapeHtml(appt.email || '')}</div>
+                            </td>
+                            <td>
+                                <div>${escapeHtml(appt.doctor_name)} <span style="font-size:0.85em; color:var(--text-muted-dark)">(${escapeHtml(appt.doctor_degree || '')})</span></div>
+                                <div style="font-size:0.8em; color:var(--text-muted-dark)">${escapeHtml(appt.specialization || '')}</div>
+                            </td>
+                            <td>
+                                <div>${formatDate(appt.appointment_date)}</div>
+                                <div style="font-size:0.85em; color:var(--text-muted-dark)">${escapeHtml(appt.appointment_time)}</div>
+                            </td>
+                            <td>${escapeHtml(appt.phone || '-')}</td>
+                            <td><span class="appt-status ${appt.status}">${appt.status}</span></td>
+                            <td class="action-btns">${getApptActions(appt)}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    allAppointments = [];
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <div class="empty-icon">📅</div>
+                                <p>No appointments yet</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <div class="empty-icon">⚠️</div>
+                            <p>Error loading appointments</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function getApptActions(appt) {
+            if (appt.status === 'completed' || appt.status === 'cancelled') {
+                return '<span style="color: var(--text-muted-dark);">—</span>';
+            }
+            let btns = [];
+            if (appt.status === 'pending') {
+                btns.push(`<button class="action-btn dispatch" onclick="updateApptStatus(${appt.id}, 'confirmed')">✅ Confirm</button>`);
+            }
+            if (appt.status === 'confirmed') {
+                btns.push(`<button class="action-btn complete" onclick="updateApptStatus(${appt.id}, 'completed')">✔️ Complete</button>`);
+            }
+            btns.push(`<button class="action-btn cancel" onclick="updateApptStatus(${appt.id}, 'cancelled')">❌ Cancel</button>`);
+            return btns.join('');
+        }
+
+        async function updateApptStatus(apptId, newStatus) {
+            if (!confirm(`Mark this appointment as "${newStatus}"?`)) return;
+            try {
+                const response = await fetch(`/admin/appointments/${apptId}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    loadAppointments();
+                } else {
+                    alert(data.message || 'Failed to update status');
+                }
+            } catch (error) {
+                alert('Error updating appointment status');
+            }
+        }
 
         document.addEventListener('keypress', function (e) {
             if (e.key === 'Enter' && document.getElementById('loginView').style.display !== 'none') {

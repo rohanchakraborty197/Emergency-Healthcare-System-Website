@@ -3,6 +3,7 @@ import express from "express";
 import mysql from "mysql2";
 import cors from "cors";
 import bodyParser from "body-parser";
+import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcrypt";
@@ -13,6 +14,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const server = http.createServer(app);
+
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -30,6 +33,29 @@ const db = mysql.createConnection({
 db.connect(err => {
     if (err) throw err;
     console.log("✅ MySQL Connected");
+
+    // Auto-create doctor_appointments table
+    const createApptTable = `
+        CREATE TABLE IF NOT EXISTS doctor_appointments(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    doctor_name VARCHAR(255) NOT NULL,
+    specialization VARCHAR(255),
+    patient_name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    email VARCHAR(255),
+    appointment_date DATE NOT NULL,
+    appointment_time VARCHAR(20) NOT NULL,
+    reason TEXT,
+    status ENUM('pending', 'confirmed', 'completed', 'cancelled') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+)
+    `;
+    db.query(createApptTable, (err) => {
+        if (err) console.error("Error creating doctor_appointments table:", err.message);
+        else console.log("✅ doctor_appointments table ready");
+    });
 });
 
 // ✅ SIGNUP API (with password hashing)
@@ -120,8 +146,8 @@ app.post("/book", (req, res) => {
         });
     }
 
-    const sql = `INSERT INTO bookings (user_id, patient_name, phone, pickup_location, drop_location, emergency_type, notes, status) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`;
+    const sql = `INSERT INTO bookings(user_id, patient_name, phone, pickup_location, drop_location, emergency_type, notes, status)
+VALUES(?, ?, ?, ?, ?, ?, ?, 'pending')`;
 
     db.query(sql, [userId || null, patientName, phone, pickupLocation, dropLocation, emergencyType, notes || ""], (err, result) => {
         if (err) {
@@ -136,6 +162,22 @@ app.post("/book", (req, res) => {
             message: "Booking confirmed!",
             bookingId: result.insertId
         });
+    });
+});
+
+// ✅ GET SINGLE BOOKING DETAILS (for tracking)
+app.get("/bookings/:id", (req, res) => {
+    const { id } = req.params;
+    const sql = "SELECT * FROM bookings WHERE id = ?";
+    db.query(sql, [id], (err, results) => {
+        if (err) {
+            console.error("Fetch booking error:", err);
+            return res.json({ success: false, message: "Failed to fetch booking" });
+        }
+        if (results.length === 0) {
+            return res.json({ success: false, message: "Booking not found" });
+        }
+        res.json({ success: true, booking: results[0] });
     });
 });
 
@@ -275,12 +317,12 @@ app.put("/admin/bookings/:id/status", (req, res) => {
 // ✅ GET BOOKING STATS (for dashboard cards)
 app.get("/admin/stats", (req, res) => {
     const sql = `
-        SELECT 
-            COUNT(*) as total,
-            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-            SUM(CASE WHEN status = 'dispatched' THEN 1 ELSE 0 END) as dispatched,
-            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-            SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
+SELECT
+COUNT(*) as total,
+    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+    SUM(CASE WHEN status = 'dispatched' THEN 1 ELSE 0 END) as dispatched,
+    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+    SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
         FROM bookings
     `;
     db.query(sql, (err, results) => {
@@ -295,9 +337,9 @@ app.get("/admin/stats", (req, res) => {
 // ✅ GET ALL USERS (for admin user management)
 app.get("/admin/users", (req, res) => {
     const sql = `
-        SELECT u.id, u.name, u.email, 
-               COUNT(b.id) as total_bookings,
-               MAX(b.created_at) as last_booking
+        SELECT u.id, u.name, u.email,
+    COUNT(b.id) as total_bookings,
+    MAX(b.created_at) as last_booking
         FROM users u
         LEFT JOIN bookings b ON u.id = b.user_id
         GROUP BY u.id, u.name, u.email
@@ -326,263 +368,172 @@ app.get("/admin/users/:userId/bookings", (req, res) => {
     });
 });
 
-// ============================================
-// ✅ MEDICAL CHATBOT APIs
-// ============================================
-
-// Helper: Extract symptoms from user message
-function extractSymptoms(message, symptomList) {
-    const lowerMessage = message.toLowerCase().replace(/[^a-z\s]/g, '');
-    const words = lowerMessage.split(/\s+/);
-    const matched = [];
-
-    for (const symptom of symptomList) {
-        const symptomLower = symptom.name.toLowerCase();
-        const symptomWords = symptomLower.split(' ');
-
-        // Check if symptom words appear in message
-        const allWordsMatch = symptomWords.every(word =>
-            words.some(msgWord => msgWord.includes(word) || word.includes(msgWord))
-        );
-
-        // Also check for underscore version
-        const underscoreVersion = symptomLower.replace(/ /g, '_');
-
-        if (allWordsMatch || lowerMessage.includes(symptomLower) || lowerMessage.includes(underscoreVersion)) {
-            matched.push(symptom);
-        }
-    }
-
-    return matched;
-}
-
-// Helper: Calculate disease scores
-function calculateDiseaseScores(matchedSymptoms, diseaseSymptomMap) {
-    const scores = {};
-
-    for (const symptom of matchedSymptoms) {
-        const diseases = diseaseSymptomMap.get(symptom.id) || [];
-        for (const diseaseId of diseases) {
-            if (!scores[diseaseId]) {
-                scores[diseaseId] = { count: 0, weightSum: 0 };
-            }
-            scores[diseaseId].count++;
-            scores[diseaseId].weightSum += symptom.weight;
-        }
-    }
-
-    return scores;
-}
-
-// ✅ CHATBOT ANALYZE SYMPTOMS API
-app.post("/chatbot/analyze", async (req, res) => {
-    const { userId, message } = req.body;
-
-    if (!message) {
-        return res.json({ success: false, message: "Please describe your symptoms" });
-    }
-
-    const lowerMessage = message.toLowerCase().trim();
-
-    // Handle greetings and common phrases
-    const greetings = ['hi', 'hello', 'hey', 'hii', 'hiii', 'good morning', 'good afternoon', 'good evening', 'howdy'];
-    const thanks = ['thank', 'thanks', 'thank you', 'thx'];
-    const helpPhrases = ['help', 'what can you do', 'how does this work'];
-
-    if (greetings.some(g => lowerMessage === g || lowerMessage.startsWith(g + ' '))) {
-        const greetingResponse = "👋 Hello! I'm your medical assistant. I can help you identify possible health conditions based on your symptoms.\n\nPlease describe what you're feeling, for example:\n• 'I have fever and headache'\n• 'I'm experiencing skin rash and itching'\n• 'I have stomach pain and nausea'";
-
-        return res.json({
-            success: true,
-            matchedSymptoms: [],
-            prediction: null,
-            response: greetingResponse
-        });
-    }
-
-    if (thanks.some(t => lowerMessage.includes(t))) {
-        return res.json({
-            success: true,
-            matchedSymptoms: [],
-            prediction: null,
-            response: "You're welcome! 😊 Feel free to describe any symptoms if you need more help. Take care and stay healthy!"
-        });
-    }
-
-    if (helpPhrases.some(h => lowerMessage.includes(h))) {
-        return res.json({
-            success: true,
-            matchedSymptoms: [],
-            prediction: null,
-            response: "🩺 I'm a medical symptom analyzer. Here's how I can help:\n\n1️⃣ Describe your symptoms (e.g., 'I have fever, cough, and body pain')\n2️⃣ I'll analyze and suggest possible conditions\n3️⃣ You'll get precautions and doctor recommendations\n\n⚠️ Note: This is for guidance only. Always consult a real doctor for proper diagnosis."
-        });
-    }
-
-    try {
-        // 1. Get all symptoms from database
-        const getSymptomsQuery = "SELECT id, name, weight FROM symptoms";
-        db.query(getSymptomsQuery, (err, symptoms) => {
-            if (err) {
-                console.error("Error fetching symptoms:", err);
-                return res.json({ success: false, message: "Failed to analyze symptoms" });
-            }
-
-            // 2. Extract symptoms from message
-            const matchedSymptoms = extractSymptoms(message, symptoms);
-
-            if (matchedSymptoms.length === 0) {
-                // Save to chat history
-                const saveQuery = `INSERT INTO chat_history (user_id, message, response, predicted_disease, severity) VALUES (?, ?, ?, ?, ?)`;
-                const botResponse = "I couldn't identify specific symptoms from your message. Please describe your symptoms more clearly.\n\nTry phrases like:\n• 'I have headache and fever'\n• 'I'm feeling nausea and stomach pain'\n• 'I have skin rash and itching'";
-                db.query(saveQuery, [userId || null, message, botResponse, null, null]);
-
-                return res.json({
-                    success: true,
-                    matchedSymptoms: [],
-                    prediction: null,
-                    response: botResponse
-                });
-            }
-
-            // 3. Get disease-symptom mappings
-            const getMappingsQuery = `
-                SELECT ds.disease_id, ds.symptom_id 
-                FROM disease_symptoms ds
-            `;
-            db.query(getMappingsQuery, (err, mappings) => {
-                if (err) {
-                    console.error("Error fetching mappings:", err);
-                    return res.json({ success: false, message: "Failed to analyze symptoms" });
-                }
-
-                // Build disease-symptom map
-                const diseaseSymptomMap = new Map();
-                for (const m of mappings) {
-                    if (!diseaseSymptomMap.has(m.symptom_id)) {
-                        diseaseSymptomMap.set(m.symptom_id, []);
-                    }
-                    diseaseSymptomMap.get(m.symptom_id).push(m.disease_id);
-                }
-
-                // 4. Calculate disease scores
-                const scores = calculateDiseaseScores(matchedSymptoms, diseaseSymptomMap);
-
-                if (Object.keys(scores).length === 0) {
-                    const botResponse = "I found some symptoms but couldn't match them to a specific condition. Please consult a doctor for proper diagnosis.";
-                    const saveQuery = `INSERT INTO chat_history (user_id, message, response, predicted_disease, severity) VALUES (?, ?, ?, ?, ?)`;
-                    db.query(saveQuery, [userId || null, message, botResponse, null, null]);
-
-                    return res.json({
-                        success: true,
-                        matchedSymptoms: matchedSymptoms.map(s => s.name),
-                        prediction: null,
-                        response: botResponse
-                    });
-                }
-
-                // 5. Find best matching disease
-                const sortedDiseases = Object.entries(scores)
-                    .sort((a, b) => b[1].weightSum - a[1].weightSum);
-
-                const topDiseaseId = sortedDiseases[0][0];
-
-                // 6. Get disease details with precautions
-                const getDiseaseQuery = `
-                    SELECT d.id, d.name, d.description, d.severity,
-                           p.precaution_1, p.precaution_2, p.precaution_3, p.precaution_4
-                    FROM diseases d
-                    LEFT JOIN precautions p ON d.id = p.disease_id
-                    WHERE d.id = ?
-                `;
-                db.query(getDiseaseQuery, [topDiseaseId], (err, diseaseResults) => {
-                    if (err || diseaseResults.length === 0) {
-                        console.error("Error fetching disease:", err);
-                        return res.json({ success: false, message: "Failed to get disease info" });
-                    }
-
-                    const disease = diseaseResults[0];
-                    const precautions = [
-                        disease.precaution_1,
-                        disease.precaution_2,
-                        disease.precaution_3,
-                        disease.precaution_4
-                    ].filter(p => p && p.trim());
-
-                    // 7. Get recommended doctor based on severity
-                    let doctorQuery = "SELECT * FROM doctors";
-                    if (disease.severity === 'major') {
-                        doctorQuery += " ORDER BY rating DESC LIMIT 3";
-                    } else {
-                        doctorQuery += " WHERE specialization = 'General Physician' LIMIT 2";
-                    }
-
-                    db.query(doctorQuery, (err, doctors) => {
-                        // Build response
-                        let botResponse = `Based on your symptoms, you might have **${disease.name}**.\n\n`;
-                        botResponse += `**Severity:** ${disease.severity.charAt(0).toUpperCase() + disease.severity.slice(1)}\n\n`;
-
-                        if (disease.description) {
-                            botResponse += `**About:** ${disease.description.substring(0, 200)}...\n\n`;
-                        }
-
-                        if (precautions.length > 0) {
-                            botResponse += `**Precautions:**\n`;
-                            precautions.forEach((p, i) => {
-                                botResponse += `${i + 1}. ${p}\n`;
-                            });
-                        }
-
-                        if (disease.severity === 'major') {
-                            botResponse += `\n⚠️ **This condition requires immediate medical attention. Please consult a doctor.**`;
-                        }
-
-                        // Save to chat history
-                        const saveQuery = `INSERT INTO chat_history (user_id, message, response, predicted_disease, severity) VALUES (?, ?, ?, ?, ?)`;
-                        db.query(saveQuery, [userId || null, message, botResponse, disease.name, disease.severity]);
-
-                        res.json({
-                            success: true,
-                            matchedSymptoms: matchedSymptoms.map(s => s.name),
-                            prediction: {
-                                disease: disease.name,
-                                description: disease.description,
-                                severity: disease.severity,
-                                precautions: precautions,
-                                confidence: Math.min(95, scores[topDiseaseId].count * 15 + scores[topDiseaseId].weightSum * 2)
-                            },
-                            doctors: doctors || [],
-                            response: botResponse
-                        });
-                    });
-                });
-            });
-        });
-    } catch (error) {
-        console.error("Chatbot error:", error);
-        res.json({ success: false, message: "An error occurred" });
-    }
-});
-
-// ✅ GET CHAT HISTORY FOR USER
-app.get("/chatbot/history/:userId", (req, res) => {
-    const { userId } = req.params;
-
-    const sql = `
-        SELECT id, message, response, predicted_disease, severity, created_at 
-        FROM chat_history 
-        WHERE user_id = ? 
-        ORDER BY created_at DESC 
-        LIMIT 50
-    `;
-
-    db.query(sql, [userId], (err, results) => {
+// ✅ ADMIN: GET ALL DOCTORS
+app.get("/admin/doctors", (req, res) => {
+    const sql = "SELECT * FROM doctors ORDER BY id ASC";
+    db.query(sql, (err, results) => {
         if (err) {
-            console.error("Fetch chat history error:", err);
-            return res.json({ success: false, message: "Failed to fetch history" });
+            console.error("Fetch doctors error:", err);
+            return res.json({ success: false, message: "Failed to fetch doctors" });
         }
-        res.json({ success: true, history: results });
+        res.json({ success: true, doctors: results });
     });
 });
+
+// ✅ ADMIN: ADD NEW DOCTOR
+app.post("/admin/doctors", (req, res) => {
+    const { name, specialization, degree, hospital, phone, email, available_days, available_time, rating } = req.body;
+
+    if (!name || !specialization) {
+        return res.json({ success: false, message: "Name and specialization are required" });
+    }
+
+    const sql = `INSERT INTO doctors(name, specialization, degree, hospital, phone, email, available_days, available_time, rating)
+VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    db.query(sql, [name, specialization, degree || null, hospital || null, phone || null, email || null, available_days || 'Mon-Fri', available_time || '9:00 AM - 5:00 PM', rating || 4.0], (err, result) => {
+        if (err) {
+            console.error("Add doctor error:", err);
+            return res.json({ success: false, message: "Failed to add doctor" });
+        }
+        res.json({ success: true, message: "Doctor added successfully", doctorId: result.insertId });
+    });
+});
+
+// ✅ ADMIN: UPDATE DOCTOR
+app.put("/admin/doctors/:id", (req, res) => {
+    const { id } = req.params;
+    const { name, specialization, degree, hospital, phone, email, available_days, available_time, rating } = req.body;
+
+    if (!name || !specialization) {
+        return res.json({ success: false, message: "Name and specialization are required" });
+    }
+
+    const sql = `UPDATE doctors SET name =?, specialization =?, degree =?, hospital =?, phone =?, email =?, available_days =?, available_time =?, rating =? WHERE id =? `;
+    db.query(sql, [name, specialization, degree || null, hospital || null, phone || null, email || null, available_days || 'Mon-Fri', available_time || '9:00 AM - 5:00 PM', rating || 4.0, id], (err, result) => {
+        if (err) {
+            console.error("Update doctor error:", err);
+            return res.json({ success: false, message: "Failed to update doctor" });
+        }
+        if (result.affectedRows === 0) {
+            return res.json({ success: false, message: "Doctor not found" });
+        }
+        res.json({ success: true, message: "Doctor updated successfully" });
+    });
+});
+
+// ✅ ADMIN: DELETE DOCTOR
+app.delete("/admin/doctors/:id", (req, res) => {
+    const { id } = req.params;
+
+    const sql = "DELETE FROM doctors WHERE id = ?";
+    db.query(sql, [id], (err, result) => {
+        if (err) {
+            console.error("Delete doctor error:", err);
+            return res.json({ success: false, message: "Failed to delete doctor" });
+        }
+        if (result.affectedRows === 0) {
+            return res.json({ success: false, message: "Doctor not found" });
+        }
+        res.json({ success: true, message: "Doctor deleted successfully" });
+    });
+});
+
+// ============================================
+// ✅ DOCTOR APPOINTMENT APIs
+// ============================================
+
+// ✅ BOOK A DOCTOR APPOINTMENT (public, from frontend)
+app.post("/appointments", (req, res) => {
+    const { userId, doctorName, specialization, doctorDegree, patientName, phone, email, appointmentDate, appointmentTime, reason } = req.body;
+
+    if (!patientName || !doctorName || !appointmentDate || !appointmentTime) {
+        return res.json({ success: false, message: "Required fields are missing" });
+    }
+
+    const sql = `INSERT INTO doctor_appointments(user_id, doctor_name, specialization, doctor_degree, patient_name, phone, email, appointment_date, appointment_time, reason, status)
+VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`;
+
+    db.query(sql, [userId || null, doctorName, specialization || null, doctorDegree || null, patientName, phone || null, email || null, appointmentDate, appointmentTime, reason || null], (err, result) => {
+        if (err) {
+            console.error("Appointment booking error:", err);
+            return res.json({ success: false, message: "Failed to book appointment" });
+        }
+        res.json({
+            success: true,
+            message: "Appointment booked successfully",
+            appointmentId: result.insertId
+        });
+    });
+});
+
+// ✅ ADMIN: GET ALL APPOINTMENTS
+app.get("/admin/appointments", (req, res) => {
+    const sql = "SELECT * FROM doctor_appointments ORDER BY created_at DESC";
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Fetch appointments error:", err);
+            return res.json({ success: false, message: "Failed to fetch appointments" });
+        }
+        res.json({ success: true, appointments: results });
+    });
+});
+
+// ✅ ADMIN: UPDATE APPOINTMENT STATUS
+app.put("/admin/appointments/:id/status", (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+        return res.json({ success: false, message: "Invalid status" });
+    }
+
+    const sql = "UPDATE doctor_appointments SET status = ? WHERE id = ?";
+    db.query(sql, [status, id], (err, result) => {
+        if (err) {
+            console.error("Update appointment status error:", err);
+            return res.json({ success: false, message: "Failed to update appointment status" });
+        }
+        if (result.affectedRows === 0) {
+            return res.json({ success: false, message: "Appointment not found" });
+        }
+        res.json({ success: true, message: "Appointment status updated successfully" });
+    });
+});
+
+// ✅ ADMIN: GET APPOINTMENT STATS
+app.get("/admin/appointment-stats", (req, res) => {
+    const sql = `
+SELECT
+COUNT(*) as total,
+    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+    SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed,
+    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+    SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
+        FROM doctor_appointments
+    `;
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Appointment stats error:", err);
+            return res.json({ success: false, message: "Failed to fetch appointment stats" });
+        }
+        res.json({ success: true, stats: results[0] });
+    });
+});
+
+// ✅ USER: GET MY DOCTOR APPOINTMENTS
+app.get("/user/appointments/:userId", (req, res) => {
+    const { userId } = req.params;
+    const sql = "SELECT * FROM doctor_appointments WHERE user_id = ? ORDER BY created_at DESC";
+    db.query(sql, [userId], (err, results) => {
+        if (err) {
+            console.error("Fetch user appointments error:", err);
+            return res.json({ success: false, message: "Failed to fetch appointments" });
+        }
+        res.json({ success: true, appointments: results });
+    });
+});
+
 
 // ✅ GET ALL DOCTORS
 app.get("/doctors", (req, res) => {
@@ -609,20 +560,130 @@ app.get("/doctors/specialization/:spec", (req, res) => {
     });
 });
 
-// ✅ GET ALL SYMPTOMS (for autocomplete)
-app.get("/symptoms", (req, res) => {
-    const sql = "SELECT name FROM symptoms ORDER BY name";
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error("Fetch symptoms error:", err);
-            return res.json({ success: false, message: "Failed to fetch symptoms" });
+// ============================================
+// ✅ AI MEDICAL CHATBOT API
+// ============================================
+app.post("/chat", async (req, res) => {
+    const { message } = req.body;
+
+    if (!message) {
+        return res.json({ success: false, reply: "I didn't catch that. Could you please repeat?" });
+    }
+
+    const lowerMsg = message.toLowerCase();
+    let reply = "I'm not sure about that. Please consult a doctor for accurate advice.";
+    let action = null;
+
+    // 🚨 1. EMERGENCY DETECTION (Highest Priority)
+    if (lowerMsg.includes("pain") || lowerMsg.includes("heart") || lowerMsg.includes("attack") ||
+        lowerMsg.includes("stroke") || lowerMsg.includes("breathing") || lowerMsg.includes("unconscious") ||
+        lowerMsg.includes("bleeding") || lowerMsg.includes("accident") || lowerMsg.includes("trauma")) {
+
+        reply = "🚨 **EMERGENCY DETECTED!** \n\nPlease call an ambulance immediately or visit the nearest hospital. Do you want to book an ambulance now?";
+        action = "ambulance";
+        return res.json({ success: true, reply, action });
+    }
+
+    // 👋 2. GREETINGS & THANKS
+    if (lowerMsg.includes("hi") || lowerMsg.includes("hello") || lowerMsg.includes("hey")) {
+        reply = "Hello! 👋 I'm your AI Health Assistant. Tell me your symptoms, and I'll guide you.";
+        return res.json({ success: true, reply, action });
+    }
+    if (lowerMsg.includes("thank")) {
+        reply = "You're welcome! Stay safe and healthy. ❤️";
+        return res.json({ success: true, reply, action });
+    }
+
+    // 🤖 3. ML MODEL PREDICTION
+    try {
+        const mlRes = await fetch("http://localhost:5000/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ symptoms: [message] })
+        });
+
+        const data = await mlRes.json();
+
+        if (data.disease) {
+            const disease = data.disease;
+            const confidence = (data.confidence * 100).toFixed(1);
+
+            // Map Disease -> Specialist
+            const specialistMap = {
+                'Heart Attack': 'Cardiologist',
+                'Bronchial Asthma': 'Pulmonologist',
+                'Hypertension': 'Cardiologist',
+                'Migraine': 'Neurologist',
+                'Cervical spondylosis': 'Neurologist',
+                'Paralysis (brain hemorrhage)': 'Neurologist',
+                'Jaundice': 'Gastroenterologist',
+                'Malaria': 'General Physician',
+                'Chicken pox': 'General Physician',
+                'Dengue': 'General Physician',
+                'Typhoid': 'General Physician',
+                'Hepatitis A': 'Hepatologist',
+                'Hepatitis B': 'Hepatologist',
+                'Hepatitis C': 'Hepatologist',
+                'Hepatitis D': 'Hepatologist',
+                'Hepatitis E': 'Hepatologist',
+                'Alcoholic hepatitis': 'Hepatologist',
+                'Tuberculosis': 'Pulmonologist',
+                'Common Cold': 'General Physician',
+                'Pneumonia': 'Pulmonologist',
+                'Dimorphic hemmorhoids(piles)': 'Gastroenterologist',
+                'Varicose veins': 'Vascular Surgeon',
+                'Hypothyroidism': 'Endocrinologist',
+                'Hyperthyroidism': 'Endocrinologist',
+                'Hypoglycemia': 'Endocrinologist',
+                'Osteoarthristis': 'Orthopedic',
+                'Arthritis': 'Orthopedic',
+                'Gastroenteritis': 'Gastroenterologist',
+                'Acne': 'Dermatologist',
+                'Urinary tract infection': 'Urologist',
+                'Psoriasis': 'Dermatologist',
+                'Impetigo': 'Dermatologist',
+                'Fungal infection': 'Dermatologist',
+                'Allergy': 'Dermatologist',
+                'Gastroesophageal reflux disease': 'Gastroenterologist',
+                'Drug Reaction': 'General Physician',
+                'Peptic ulcer diseae': 'Gastroenterologist',
+                'AIDS': 'General Physician',
+                'Diabetes ': 'Endocrinologist'
+            };
+
+            const specialist = specialistMap[disease] || 'General Physician';
+
+            reply = `Based on your symptoms, it could be **${disease}** (${confidence}% confidence).\n\nI recommend consulting a **${specialist}**.`;
+            action = "doctor";
+
+            return res.json({ success: true, reply, action });
         }
-        res.json({ success: true, symptoms: results.map(s => s.name) });
-    });
+
+    } catch (err) {
+        console.error("ML Server Error:", err.message);
+        // Continue to fallback...
+    }
+
+    // ⚠️ 4. FALLBACK (Keyword Matching)
+    if (lowerMsg.includes("fever") || lowerMsg.includes("cold") || lowerMsg.includes("cough") || lowerMsg.includes("headache")) {
+        reply = "It sounds like you might have a viral infection or flu. Stay hydrated and rest. \n\nI recommend booking an appointment with a **General Physician**.";
+        action = "doctor";
+    }
+    else if (lowerMsg.includes("stomach") || lowerMsg.includes("vomit") || lowerMsg.includes("diarrhea")) {
+        reply = "Stomach issues can be due to various reasons. Avoid spicy food. \n\nPlease consult a **Gastroenterologist**.";
+        action = "doctor";
+    }
+    else if (lowerMsg.includes("skin") || lowerMsg.includes("rash") || lowerMsg.includes("itch")) {
+        reply = "For skin issues, it's best to see a specialist. \n\nConsider booking a **Dermatologist**.";
+        action = "doctor";
+    }
+
+    res.json({ success: true, reply, action });
 });
 
 // ✅ Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+
+server.listen(PORT, () => {
     console.log(`✅ Server running at http://localhost:${PORT}`);
 });
