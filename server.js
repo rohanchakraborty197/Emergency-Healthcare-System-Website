@@ -560,9 +560,54 @@ app.get("/doctors/specialization/:spec", (req, res) => {
     });
 });
 
-// ============================================
-// ✅ AI MEDICAL CHATBOT API
-// ============================================
+
+// AI MEDICAL CHATBOT API (Custom ML)
+
+// Disease → Specialist mapping
+const specialistMap = {
+    'Heart Attack': 'Cardiologist',
+    'Bronchial Asthma': 'Pulmonologist',
+    'Hypertension ': 'Cardiologist',
+    'Migraine': 'Neurologist',
+    'Cervical spondylosis': 'Neurologist',
+    'Paralysis (brain hemorrhage)': 'Neurologist',
+    'Jaundice': 'Gastroenterologist',
+    'Malaria': 'General Physician',
+    'Chicken pox': 'General Physician',
+    'Dengue': 'General Physician',
+    'Typhoid': 'General Physician',
+    'hepatitis A': 'Hepatologist',
+    'Hepatitis B': 'Hepatologist',
+    'Hepatitis C': 'Hepatologist',
+    'Hepatitis D': 'Hepatologist',
+    'Hepatitis E': 'Hepatologist',
+    'Alcoholic hepatitis': 'Hepatologist',
+    'Tuberculosis': 'Pulmonologist',
+    'Common Cold': 'General Physician',
+    'Pneumonia': 'Pulmonologist',
+    'Dimorphic hemmorhoids(piles)': 'Gastroenterologist',
+    'Varicose veins': 'Vascular Surgeon',
+    'Hypothyroidism': 'Endocrinologist',
+    'Hyperthyroidism': 'Endocrinologist',
+    'Hypoglycemia': 'Endocrinologist',
+    'Osteoarthristis': 'Orthopedic',
+    'Arthritis': 'Orthopedic',
+    'Gastroenteritis': 'Gastroenterologist',
+    'Acne': 'Dermatologist',
+    'Urinary tract infection': 'Urologist',
+    'Psoriasis': 'Dermatologist',
+    'Impetigo': 'Dermatologist',
+    'Fungal infection': 'Dermatologist',
+    'Allergy': 'Dermatologist',
+    'GERD': 'Gastroenterologist',
+    'Drug Reaction': 'General Physician',
+    'Peptic ulcer diseae': 'Gastroenterologist',
+    'AIDS': 'General Physician',
+    'Diabetes ': 'Endocrinologist',
+    'Chronic cholestasis': 'Gastroenterologist',
+    '(vertigo) Paroymsal  Positional Vertigo': 'ENT Specialist'
+};
+
 app.post("/chat", async (req, res) => {
     const { message } = req.body;
 
@@ -570,115 +615,127 @@ app.post("/chat", async (req, res) => {
         return res.json({ success: false, reply: "I didn't catch that. Could you please repeat?" });
     }
 
-    const lowerMsg = message.toLowerCase();
-    let reply = "I'm not sure about that. Please consult a doctor for accurate advice.";
+    const lowerMsg = message.toLowerCase().trim();
+    let reply = "";
     let action = null;
+    let richData = null;
 
     // 🚨 1. EMERGENCY DETECTION (Highest Priority)
-    if (lowerMsg.includes("pain") || lowerMsg.includes("heart") || lowerMsg.includes("attack") ||
-        lowerMsg.includes("stroke") || lowerMsg.includes("breathing") || lowerMsg.includes("unconscious") ||
-        lowerMsg.includes("bleeding") || lowerMsg.includes("accident") || lowerMsg.includes("trauma")) {
+    const emergencyPatterns = [
+        'heart attack', 'stroke', 'unconscious', 'not breathing',
+        'severe bleeding', 'accident', 'trauma', 'seizure', 'collapsed',
+        'can\'t breathe', 'choking', 'overdose', 'suicide'
+    ];
+    const isEmergency = emergencyPatterns.some(p => lowerMsg.includes(p));
 
+    if (isEmergency) {
         reply = "🚨 **EMERGENCY DETECTED!** \n\nPlease call an ambulance immediately or visit the nearest hospital. Do you want to book an ambulance now?";
         action = "ambulance";
-        return res.json({ success: true, reply, action });
+        return res.json({ success: true, reply, action, richData: null });
     }
 
-    // 👋 2. GREETINGS & THANKS
-    if (lowerMsg.includes("hi") || lowerMsg.includes("hello") || lowerMsg.includes("hey")) {
-        reply = "Hello! 👋 I'm your AI Health Assistant. Tell me your symptoms, and I'll guide you.";
-        return res.json({ success: true, reply, action });
+    // 👋 2. GREETINGS & CONVERSATIONAL
+    if (/^(hi|hello|hey|hola|namaste|good morning|good evening|good afternoon)\b/.test(lowerMsg)) {
+        reply = "Hello! 👋 I'm your AI Health Assistant powered by custom ML. Tell me your symptoms, and I'll analyze them to suggest a possible diagnosis.";
+        return res.json({ success: true, reply, action: null, richData: null });
     }
-    if (lowerMsg.includes("thank")) {
-        reply = "You're welcome! Stay safe and healthy. ❤️";
-        return res.json({ success: true, reply, action });
+    if (/^(thank|thanks|thx|ty|appreciate)/.test(lowerMsg)) {
+        reply = "You're welcome! Stay safe and healthy. ❤️ Remember, always consult a doctor for proper diagnosis.";
+        return res.json({ success: true, reply, action: null, richData: null });
+    }
+    if (/^(bye|goodbye|see you|take care)/.test(lowerMsg)) {
+        reply = "Take care! 🌟 Don't hesitate to come back if you need health guidance.";
+        return res.json({ success: true, reply, action: null, richData: null });
+    }
+    if (/^(what can you do|help|how do you work|what are you)/.test(lowerMsg)) {
+        reply = "I'm an AI Health Assistant trained on 41 diseases with 132 symptoms. 🧠\n\nJust describe your symptoms (e.g., \"I have a headache, fever, and nausea\") and I'll analyze them using our custom ML model to suggest a possible diagnosis, severity level, and recommended precautions.";
+        return res.json({ success: true, reply, action: null, richData: null });
     }
 
-    // 🤖 3. ML MODEL PREDICTION
+    // 🤖 3. ML MODEL ANALYSIS (NLP + Prediction)
     try {
-        const mlRes = await fetch("http://localhost:5000/predict", {
+        const mlRes = await fetch("http://localhost:5000/analyze", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ symptoms: [message] })
+            body: JSON.stringify({ text: message })
         });
 
         const data = await mlRes.json();
 
-        if (data.disease) {
+        if (data.success && data.disease) {
             const disease = data.disease;
             const confidence = (data.confidence * 100).toFixed(1);
+            const severity = data.severity || 'unknown';
+            const description = data.description || '';
+            const precautions = data.precautions || [];
+            const top3 = data.top_3 || [];
+            const matchedSymptoms = data.matched_symptoms || [];
 
-            // Map Disease -> Specialist
-            const specialistMap = {
-                'Heart Attack': 'Cardiologist',
-                'Bronchial Asthma': 'Pulmonologist',
-                'Hypertension': 'Cardiologist',
-                'Migraine': 'Neurologist',
-                'Cervical spondylosis': 'Neurologist',
-                'Paralysis (brain hemorrhage)': 'Neurologist',
-                'Jaundice': 'Gastroenterologist',
-                'Malaria': 'General Physician',
-                'Chicken pox': 'General Physician',
-                'Dengue': 'General Physician',
-                'Typhoid': 'General Physician',
-                'Hepatitis A': 'Hepatologist',
-                'Hepatitis B': 'Hepatologist',
-                'Hepatitis C': 'Hepatologist',
-                'Hepatitis D': 'Hepatologist',
-                'Hepatitis E': 'Hepatologist',
-                'Alcoholic hepatitis': 'Hepatologist',
-                'Tuberculosis': 'Pulmonologist',
-                'Common Cold': 'General Physician',
-                'Pneumonia': 'Pulmonologist',
-                'Dimorphic hemmorhoids(piles)': 'Gastroenterologist',
-                'Varicose veins': 'Vascular Surgeon',
-                'Hypothyroidism': 'Endocrinologist',
-                'Hyperthyroidism': 'Endocrinologist',
-                'Hypoglycemia': 'Endocrinologist',
-                'Osteoarthristis': 'Orthopedic',
-                'Arthritis': 'Orthopedic',
-                'Gastroenteritis': 'Gastroenterologist',
-                'Acne': 'Dermatologist',
-                'Urinary tract infection': 'Urologist',
-                'Psoriasis': 'Dermatologist',
-                'Impetigo': 'Dermatologist',
-                'Fungal infection': 'Dermatologist',
-                'Allergy': 'Dermatologist',
-                'Gastroesophageal reflux disease': 'Gastroenterologist',
-                'Drug Reaction': 'General Physician',
-                'Peptic ulcer diseae': 'Gastroenterologist',
-                'AIDS': 'General Physician',
-                'Diabetes ': 'Endocrinologist'
-            };
-
+            // Get specialist recommendation
             const specialist = specialistMap[disease] || 'General Physician';
 
-            reply = `Based on your symptoms, it could be **${disease}** (${confidence}% confidence).\n\nI recommend consulting a **${specialist}**.`;
-            action = "doctor";
+            // Severity emoji
+            const severityEmoji = severity === 'high' ? '🔴' : severity === 'medium' ? '🟠' : '🟢';
+            const severityLabel = severity.charAt(0).toUpperCase() + severity.slice(1);
 
-            return res.json({ success: true, reply, action });
+            // Build rich text reply
+            reply = `**${severityEmoji} ${disease}** (${confidence}% confidence)\n`;
+            reply += `Severity: ${severityLabel}\n\n`;
+
+            if (description) {
+                reply += `📋 ${description}\n\n`;
+            }
+
+            if (precautions.length > 0) {
+                reply += `⚕️ **Precautions:**\n`;
+                precautions.forEach(p => {
+                    reply += `• ${p.charAt(0).toUpperCase() + p.slice(1)}\n`;
+                });
+                reply += '\n';
+            }
+
+            reply += `👨‍⚕️ Recommended: **${specialist}**`;
+
+            // Build richData for enhanced frontend rendering
+            richData = {
+                disease,
+                confidence: parseFloat(confidence),
+                severity,
+                description,
+                precautions,
+                specialist,
+                matchedSymptoms,
+                top3: top3.map(t => ({
+                    disease: t.disease,
+                    confidence: (t.confidence * 100).toFixed(1),
+                    severity: t.severity
+                }))
+            };
+
+            // Set action based on severity
+            if (severity === 'high') {
+                action = "ambulance";
+            } else {
+                action = "doctor";
+            }
+
+            return res.json({ success: true, reply, action, richData });
+        }
+
+        // ML returned no symptoms found
+        if (data.error === 'no_symptoms_found') {
+            reply = "I couldn't identify specific medical symptoms from your message. 🤔\n\nTry describing your symptoms more specifically, for example:\n• \"I have a headache and fever\"\n• \"I feel dizzy and nauseous\"\n• \"I have skin rash and itching\"";
+            return res.json({ success: true, reply, action: null, richData: null });
         }
 
     } catch (err) {
         console.error("ML Server Error:", err.message);
-        // Continue to fallback...
+        // Fall through to fallback
     }
 
-    // ⚠️ 4. FALLBACK (Keyword Matching)
-    if (lowerMsg.includes("fever") || lowerMsg.includes("cold") || lowerMsg.includes("cough") || lowerMsg.includes("headache")) {
-        reply = "It sounds like you might have a viral infection or flu. Stay hydrated and rest. \n\nI recommend booking an appointment with a **General Physician**.";
-        action = "doctor";
-    }
-    else if (lowerMsg.includes("stomach") || lowerMsg.includes("vomit") || lowerMsg.includes("diarrhea")) {
-        reply = "Stomach issues can be due to various reasons. Avoid spicy food. \n\nPlease consult a **Gastroenterologist**.";
-        action = "doctor";
-    }
-    else if (lowerMsg.includes("skin") || lowerMsg.includes("rash") || lowerMsg.includes("itch")) {
-        reply = "For skin issues, it's best to see a specialist. \n\nConsider booking a **Dermatologist**.";
-        action = "doctor";
-    }
-
-    res.json({ success: true, reply, action });
+    // ⚠️ 4. FALLBACK (when ML server is unreachable)
+    reply = "I'm having trouble connecting to the diagnosis engine right now. 😔\n\nPlease try again in a moment, or describe your symptoms differently.";
+    res.json({ success: true, reply, action: null, richData: null });
 });
 
 // ✅ Start server

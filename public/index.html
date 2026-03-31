@@ -959,137 +959,407 @@
         .chat-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            width: 50px;
-            height: 50px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
             border: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
             cursor: pointer;
-            font-size: 24px;
+            font-size: 26px;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4); }
+            50% { box-shadow: 0 4px 30px rgba(102, 126, 234, 0.7); }
         }
 
         .chat-btn:hover {
             transform: scale(1.1);
+            animation: none;
         }
 
         .chat-window {
             position: fixed;
-            bottom: 80px;
+            bottom: 85px;
             right: 20px;
-            width: 320px;
-            height: 450px;
+            width: 380px;
+            height: 520px;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+            border-radius: 18px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
             display: none;
             flex-direction: column;
             overflow: hidden;
             z-index: 1001;
-            border: 1px solid #eee;
+            border: 1px solid #e0e0e0;
         }
 
         .chat-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 15px;
+            padding: 15px 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: bold;
+            font-size: 0.95em;
+        }
+
+        .chat-header-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-header-dot {
+            width: 8px;
+            height: 8px;
+            background: #2ed573;
+            border-radius: 50%;
+            animation: blink-dot 1.5s infinite;
+        }
+
+        @keyframes blink-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
         }
 
         .chat-body {
             flex: 1;
             padding: 15px;
             overflow-y: auto;
-            background: #f9f9f9;
+            background: #f5f6fa;
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
 
         .chat-message {
-            max-width: 80%;
-            padding: 10px 15px;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            line-height: 1.4;
+            max-width: 88%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            line-height: 1.5;
             word-wrap: break-word;
+            animation: chatFadeIn 0.3s ease;
+        }
+
+        @keyframes chatFadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .bot-msg {
             background: white;
             color: #333;
-            border: 1px solid #eee;
+            border: 1px solid #e8e8e8;
             align-self: flex-start;
-            border-bottom-left-radius: 2px;
+            border-bottom-left-radius: 3px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
         }
 
         .user-msg {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             align-self: flex-end;
-            border-bottom-right-radius: 2px;
+            border-bottom-right-radius: 3px;
         }
 
         .chat-input-area {
-            padding: 10px;
+            padding: 12px;
             border-top: 1px solid #eee;
             background: white;
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .chat-input {
             flex: 1;
-            padding: 10px;
+            padding: 10px 15px;
             border: 1px solid #ddd;
-            border-radius: 20px;
+            border-radius: 22px;
             outline: none;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: #667eea;
         }
 
         .chat-send {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
-            padding: 8px 15px;
-            border-radius: 20px;
+            padding: 8px 16px;
+            border-radius: 22px;
             cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s;
+        }
+
+        .chat-send:hover {
+            transform: scale(1.05);
         }
 
         .chat-action-btn {
             display: inline-block;
-            margin-top: 10px;
-            padding: 8px 15px;
-            background: #ff4757;
+            margin-top: 8px;
+            margin-right: 6px;
+            padding: 7px 14px;
             color: white;
             text-decoration: none;
-            border-radius: 5px;
-            font-size: 0.8rem;
+            border-radius: 18px;
+            font-size: 0.78rem;
+            font-weight: 600;
             cursor: pointer;
             border: none;
+            transition: all 0.2s;
         }
 
-        /* Animation */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .chat-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
         }
 
-        .chat-message {
-            animation: fadeIn 0.3s ease;
+        .chat-action-btn.ambulance-btn {
+            background: linear-gradient(135deg, #ff4757, #c0392b);
+        }
+
+        .chat-action-btn.doctor-btn {
+            background: linear-gradient(135deg, #2ed573, #27ae60);
+        }
+
+        /* Rich Diagnosis Card */
+        .diagnosis-card {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            margin-top: 6px;
+            overflow: hidden;
+            border: 1px solid #e8e8e8;
+            max-width: 92%;
+            align-self: flex-start;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            animation: chatFadeIn 0.4s ease;
+        }
+
+        .diagnosis-header {
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .diagnosis-header.severity-high {
+            background: linear-gradient(135deg, #fff5f5, #ffe0e0);
+        }
+
+        .diagnosis-header.severity-medium {
+            background: linear-gradient(135deg, #fffbf0, #fff3cd);
+        }
+
+        .diagnosis-header.severity-low {
+            background: linear-gradient(135deg, #f0fff4, #d4edda);
+        }
+
+        .diagnosis-disease {
+            font-weight: 700;
+            font-size: 0.9em;
+            color: #333;
+        }
+
+        .severity-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .severity-badge.high {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .severity-badge.medium {
+            background: #f39c12;
+            color: white;
+        }
+
+        .severity-badge.low {
+            background: #27ae60;
+            color: white;
+        }
+
+        .diagnosis-body {
+            padding: 12px 14px;
+        }
+
+        .diagnosis-confidence {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .confidence-bar-bg {
+            flex: 1;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .confidence-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.6s ease;
+        }
+
+        .confidence-bar-fill.high { background: linear-gradient(90deg, #e74c3c, #ff6b6b); }
+        .confidence-bar-fill.medium { background: linear-gradient(90deg, #f39c12, #fdcb6e); }
+        .confidence-bar-fill.low { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+
+        .confidence-pct {
+            font-size: 0.75em;
+            font-weight: 700;
+            color: #667eea;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        .diagnosis-desc {
+            font-size: 0.78em;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .diagnosis-precautions {
+            margin-bottom: 10px;
+        }
+
+        .diagnosis-precautions-title {
+            font-size: 0.75em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .diagnosis-precautions ul {
+            margin: 0;
+            padding-left: 16px;
+            font-size: 0.75em;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .diagnosis-specialist {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78em;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .diagnosis-symptoms {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 10px;
+        }
+
+        .symptom-chip {
+            background: #f0f4ff;
+            color: #667eea;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.68em;
+            font-weight: 600;
+            border: 1px solid #d0d9ff;
+        }
+
+        .diagnosis-diff {
+            border-top: 1px solid #f0f0f0;
+            padding-top: 8px;
+            margin-top: 4px;
+        }
+
+        .diagnosis-diff-title {
+            font-size: 0.72em;
+            font-weight: 700;
+            color: #999;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .diff-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+            font-size: 0.72em;
+        }
+
+        .diff-item-name {
+            flex: 1;
+            color: #555;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .diff-bar-bg {
+            width: 50px;
+            height: 4px;
+            background: #eee;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .diff-bar-fill {
+            height: 100%;
+            background: #667eea;
+            border-radius: 2px;
+        }
+
+        .diff-pct {
+            color: #999;
+            font-size: 0.9em;
+            min-width: 32px;
+            text-align: right;
+        }
+
+        .diagnosis-actions {
+            padding: 10px 14px;
+            background: #fafbff;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            gap: 6px;
+        }
+
+        @media (max-width: 480px) {
+            .chat-window {
+                width: calc(100vw - 20px);
+                right: 10px;
+                bottom: 75px;
+                height: 70vh;
+            }
         }
     </style>
 </head>
@@ -1414,12 +1684,15 @@
 
     <div class="chat-window" id="chatWindow">
         <div class="chat-header">
-            <span>Health Assistant</span>
-            <span style="cursor:pointer;" onclick="toggleChat()">✖</span>
+            <div class="chat-header-info">
+                <div class="chat-header-dot"></div>
+                <span>AI Health Assistant (ML)</span>
+            </div>
+            <span style="cursor:pointer; font-size:1.1em;" onclick="toggleChat()">✖</span>
         </div>
         <div class="chat-body" id="chatBody">
             <div class="chat-message bot-msg">
-                Hello! 👋 I'm your AI Health Assistant. Tell me your symptoms, and I'll guide you.
+                Hello! 👋 I'm your AI Health Assistant powered by custom ML. Describe your symptoms (e.g., "I have fever and headache") and I'll analyze them.
             </div>
         </div>
         <div class="chat-input-area">
@@ -1619,8 +1892,8 @@
             appendMessage(message, 'user');
             input.value = "";
 
-            // Bot "Thinking"
-            const typingId = appendMessage("Thinking...", 'bot', true);
+            // Bot "Analyzing" indicator
+            const typingId = appendMessage("🧠 Analyzing symptoms...", 'bot', true);
 
             try {
                 const res = await fetch("http://localhost:3000/chat", {
@@ -1631,35 +1904,132 @@
                 const data = await res.json();
 
                 // Remove typing indicator
-                document.getElementById(typingId).remove();
+                const typingEl = document.getElementById(typingId);
+                if (typingEl) typingEl.remove();
 
                 if (data.success) {
-                    let botReply = data.reply;
-
-                    // Add Action Buttons if valid action
-                    if (data.action === "ambulance") {
-                        botReply += `<br><button class="chat-action-btn" onclick="openBookingModal(); toggleChat();">🚑 Book Ambulance Now</button>`;
-                    } else if (data.action === "doctor") {
-                        botReply += `<br><button class="chat-action-btn" onclick="document.location='#doctors'; toggleChat();" style="background: #2ed573;">🩺 Book Doctor</button>`;
+                    // If richData is available, render a diagnosis card
+                    if (data.richData) {
+                        renderDiagnosisCard(data.richData, data.action);
+                    } else {
+                        // Simple text reply (greetings, help, etc.)
+                        let botReply = data.reply.replace(/\n/g, '<br>');
+                        botReply = botReply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                        appendMessage(botReply, 'bot');
                     }
-
-                    appendMessage(botReply, 'bot');
                 } else {
-                    appendMessage("Sorry, I encountered an error.", 'bot');
+                    appendMessage("Sorry, I encountered an error. Please try again.", 'bot');
                 }
 
             } catch (err) {
-                document.getElementById(typingId).remove();
-                appendMessage("Network error. Please try again.", 'bot');
+                const typingEl = document.getElementById(typingId);
+                if (typingEl) typingEl.remove();
+                appendMessage("Network error. Please check your connection.", 'bot');
             }
+        }
+
+        // Render a rich diagnosis card in the chat
+        function renderDiagnosisCard(rd, action) {
+            const chatBody = document.getElementById("chatBody");
+
+            const severityEmoji = rd.severity === 'high' ? '🔴' : rd.severity === 'medium' ? '🟠' : '🟢';
+            const severityLabel = rd.severity.charAt(0).toUpperCase() + rd.severity.slice(1);
+
+            // Truncate description for chat
+            const desc = rd.description ? (rd.description.length > 180 ? rd.description.substring(0, 180) + '...' : rd.description) : '';
+
+            // Precautions HTML
+            let precautionsHtml = '';
+            if (rd.precautions && rd.precautions.length > 0) {
+                precautionsHtml = `
+                    <div class="diagnosis-precautions">
+                        <div class="diagnosis-precautions-title">⚕️ Precautions</div>
+                        <ul>${rd.precautions.map(p => `<li>${p.charAt(0).toUpperCase() + p.slice(1)}</li>`).join('')}</ul>
+                    </div>`;
+            }
+
+            // Matched symptoms chips
+            let symptomsHtml = '';
+            if (rd.matchedSymptoms && rd.matchedSymptoms.length > 0) {
+                symptomsHtml = `
+                    <div class="diagnosis-symptoms">
+                        ${rd.matchedSymptoms.map(s => `<span class="symptom-chip">${s.replace(/_/g, ' ')}</span>`).join('')}
+                    </div>`;
+            }
+
+            // Differential diagnoses
+            let diffHtml = '';
+            if (rd.top3 && rd.top3.length > 1) {
+                diffHtml = `
+                    <div class="diagnosis-diff">
+                        <div class="diagnosis-diff-title">Differential Diagnoses</div>
+                        ${rd.top3.map(t => {
+                            const sEmoji = t.severity === 'high' ? '🔴' : t.severity === 'medium' ? '🟠' : '🟢';
+                            return `
+                            <div class="diff-item">
+                                <span style="font-size:0.85em">${sEmoji}</span>
+                                <span class="diff-item-name">${t.disease}</span>
+                                <div class="diff-bar-bg"><div class="diff-bar-fill" style="width:${t.confidence}%"></div></div>
+                                <span class="diff-pct">${t.confidence}%</span>
+                            </div>`;
+                        }).join('')}
+                    </div>`;
+            }
+
+            // Action buttons
+            let actionsHtml = '';
+            if (action === 'ambulance') {
+                actionsHtml = `
+                    <div class="diagnosis-actions">
+                        <button class="chat-action-btn ambulance-btn" onclick="openBookingModal(); toggleChat();">🚑 Book Ambulance</button>
+                        <button class="chat-action-btn doctor-btn" onclick="document.getElementById('doctors').scrollIntoView({behavior:'smooth'}); toggleChat();">🩺 See Doctors</button>
+                    </div>`;
+            } else if (action === 'doctor') {
+                actionsHtml = `
+                    <div class="diagnosis-actions">
+                        <button class="chat-action-btn doctor-btn" onclick="document.getElementById('doctors').scrollIntoView({behavior:'smooth'}); toggleChat();">🩺 Book Doctor</button>
+                    </div>`;
+            }
+
+            const cardHtml = `
+                <div class="diagnosis-card">
+                    <div class="diagnosis-header severity-${rd.severity}">
+                        <span class="diagnosis-disease">${severityEmoji} ${rd.disease}</span>
+                        <span class="severity-badge ${rd.severity}">${severityLabel}</span>
+                    </div>
+                    <div class="diagnosis-body">
+                        <div class="diagnosis-confidence">
+                            <div class="confidence-bar-bg">
+                                <div class="confidence-bar-fill ${rd.severity}" style="width:${rd.confidence}%"></div>
+                            </div>
+                            <span class="confidence-pct">${rd.confidence}%</span>
+                        </div>
+                        ${desc ? `<div class="diagnosis-desc">${desc}</div>` : ''}
+                        ${symptomsHtml}
+                        ${precautionsHtml}
+                        <div class="diagnosis-specialist">👨‍⚕️ Recommended: ${rd.specialist}</div>
+                        ${diffHtml}
+                    </div>
+                    ${actionsHtml}
+                </div>`;
+
+            chatBody.insertAdjacentHTML('beforeend', cardHtml);
+            chatBody.scrollTop = chatBody.scrollHeight;
         }
 
         function appendMessage(text, sender, isTyping = false) {
             const chatBody = document.getElementById("chatBody");
             const msgDiv = document.createElement("div");
             msgDiv.className = `chat-message ${sender}-msg`;
-            msgDiv.innerHTML = text;
-            if (isTyping) msgDiv.id = "typing-" + Date.now();
+            // Basic markdown-like formatting
+            let formatted = text.replace(/\n/g, '<br>');
+            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            msgDiv.innerHTML = formatted;
+            if (isTyping) {
+                msgDiv.id = "typing-" + Date.now();
+                msgDiv.style.opacity = '0.7';
+                msgDiv.style.fontStyle = 'italic';
+            }
 
             chatBody.appendChild(msgDiv);
             chatBody.scrollTop = chatBody.scrollHeight;
