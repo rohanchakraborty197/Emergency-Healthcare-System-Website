@@ -1,5 +1,6 @@
 import os
 import json
+import ast
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -19,55 +20,187 @@ DATASET_DIR = os.path.join(BASE_DIR, 'dataset')
 MODEL_DIR = os.path.join(BASE_DIR, 'model')
 os.makedirs(MODEL_DIR, exist_ok=True)
 
-# STEP 1: Load all datasets
+# ══════════════════════════════════════════════════════════════════════
+# STEP 1: Load ALL datasets
+# ══════════════════════════════════════════════════════════════════════
 
 print("=" * 60)
 print("STEP 1: Loading datasets...")
 print("=" * 60)
 
-df = pd.read_csv(os.path.join(DATASET_DIR, 'dataset.csv'))
-# Strip whitespace from all string values (columns and cells)
-for col in df.columns:
-    if df[col].dtype == 'object':
-        df[col] = df[col].str.strip()
-df.columns = [c.strip() for c in df.columns]
-print(f"  Main dataset: {len(df)} rows, {df['Disease'].nunique()} diseases")
+# ── Dataset 1: Original (Disease, Symptom_1 ... Symptom_17) ──
+df1 = pd.read_csv(os.path.join(DATASET_DIR, 'dataset.csv'))
+for col in df1.columns:
+    if df1[col].dtype == 'object':
+        df1[col] = df1[col].str.strip()
+df1.columns = [c.strip() for c in df1.columns]
+print(f"  Dataset 1 (dataset.csv): {len(df1)} rows, {df1['Disease'].nunique()} diseases")
 
-# Load symptom severity weights
+# ── Dataset 2 & 3: Training.csv & Testing.csv (binary columns) ──
+binary_dfs = []
+for file_name in ['Training.csv', 'Testing.csv']:
+    path = os.path.join(DATASET_DIR, file_name)
+    if os.path.exists(path):
+        binary_df = pd.read_csv(path)
+        binary_df.columns = [c.strip() for c in binary_df.columns]
+        # Fix trailing comma issues in Kaggle CSVs causing 'Unnamed' columns
+        prognosis_col = [c for c in binary_df.columns if 'prognosis' in c.lower()][0]
+        symptom_cols_bin = [c for c in binary_df.columns if c != prognosis_col and 'unnamed' not in c.lower()]
+        
+        rows = []
+        for _, row in binary_df.iterrows():
+            disease = row[prognosis_col].strip() if isinstance(row[prognosis_col], str) else str(row[prognosis_col])
+            active = [col for col in symptom_cols_bin if row[col] == 1]
+            padded = active[:17] + [np.nan] * max(0, 17 - len(active))
+            rows.append([disease] + padded)
+            
+        cols = ['Disease'] + [f'Symptom_{i+1}' for i in range(17)]
+        converted = pd.DataFrame(rows, columns=cols)
+        binary_dfs.append(converted)
+        print(f"  {file_name} converted: {len(converted)} rows")
+
+# ── Merge datasets ──
+all_dataframes = [df1] + binary_dfs
+if len(all_dataframes) > 1:
+    df_merged = pd.concat(all_dataframes, ignore_index=True)
+    
+    # Normalize disease names 
+    name_map = {}
+    for d1 in df1['Disease'].unique():
+        for d2 in df_merged['Disease'].unique():
+            if d1.lower().strip() == d2.lower().strip() and d1 != d2:
+                name_map[d2] = d1
+                
+    if name_map:
+        df_merged['Disease'] = df_merged['Disease'].replace(name_map)
+        print(f"  Normalized {len(name_map)} disease name mismatches")
+        
+    df = df_merged
+    print(f"  ✅ Merged: {len(df)} total rows, {df['Disease'].nunique()} diseases")
+else:
+    df = df1
+    print(f"  Using single dataset: {len(df)} rows")
+
+# ── Load symptom severity weights ──
 severity_df = pd.read_csv(os.path.join(DATASET_DIR, 'Symptom-severity.csv'))
 severity_df.columns = severity_df.columns.str.strip()
 severity_df['Symptom'] = severity_df['Symptom'].str.strip()
 severity_map = dict(zip(severity_df['Symptom'], severity_df['weight']))
 print(f"  Severity weights: {len(severity_map)} symptoms")
 
-# Load disease descriptions
-desc_df = pd.read_csv(os.path.join(DATASET_DIR, 'symptom_Description.csv'))
-desc_df.columns = desc_df.columns.str.strip()
-desc_df = desc_df.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
-description_map = dict(zip(desc_df['Disease'], desc_df['Description']))
+# ── Load disease descriptions (merge both files) ──
+description_map = {}
+
+desc_path1 = os.path.join(DATASET_DIR, 'symptom_Description.csv')
+if os.path.exists(desc_path1):
+    desc_df = pd.read_csv(desc_path1)
+    desc_df.columns = desc_df.columns.str.strip()
+    desc_df = desc_df.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
+    description_map.update(dict(zip(desc_df['Disease'], desc_df['Description'])))
+
+desc_path2 = os.path.join(DATASET_DIR, 'description.csv')
+if os.path.exists(desc_path2):
+    desc_df2 = pd.read_csv(desc_path2)
+    desc_df2.columns = desc_df2.columns.str.strip()
+    desc_df2 = desc_df2.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
+    for _, row in desc_df2.iterrows():
+        disease = row['Disease'].strip() if 'Disease' in desc_df2.columns else ''
+        desc_col = [c for c in desc_df2.columns if c.lower() == 'description']
+        if desc_col and disease and disease not in description_map:
+            description_map[disease] = str(row[desc_col[0]]).strip()
+    print(f"  Merged descriptions from description.csv")
+
 print(f"  Disease descriptions: {len(description_map)} diseases")
 
-# Load precautions
-prec_df = pd.read_csv(os.path.join(DATASET_DIR, 'symptom_precaution.csv'))
-prec_df.columns = prec_df.columns.str.strip()
-prec_df = prec_df.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
+# ── Load precautions (merge both files) ──
 precaution_map = {}
-for _, row in prec_df.iterrows():
-    disease = row['Disease'].strip()
-    precautions = []
-    for i in range(1, 5):
-        col = f'Precaution_{i}'
-        if col in row and pd.notna(row[col]) and str(row[col]).strip():
-            precautions.append(str(row[col]).strip())
-    precaution_map[disease] = precautions
+
+prec_path1 = os.path.join(DATASET_DIR, 'symptom_precaution.csv')
+if os.path.exists(prec_path1):
+    prec_df = pd.read_csv(prec_path1)
+    prec_df.columns = prec_df.columns.str.strip()
+    prec_df = prec_df.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
+    for _, row in prec_df.iterrows():
+        disease = row['Disease'].strip()
+        precautions = []
+        for i in range(1, 5):
+            col = f'Precaution_{i}'
+            if col in row and pd.notna(row[col]) and str(row[col]).strip():
+                precautions.append(str(row[col]).strip())
+        precaution_map[disease] = precautions
+
+prec_path2 = os.path.join(DATASET_DIR, 'precautions_df.csv')
+if os.path.exists(prec_path2):
+    prec_df2 = pd.read_csv(prec_path2)
+    prec_df2.columns = prec_df2.columns.str.strip()
+    prec_df2 = prec_df2.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
+    for _, row in prec_df2.iterrows():
+        disease = row['Disease'].strip()
+        if disease not in precaution_map:
+            precautions = []
+            for i in range(1, 5):
+                col = f'Precaution_{i}'
+                if col in row and pd.notna(row[col]) and str(row[col]).strip():
+                    precautions.append(str(row[col]).strip())
+            if precautions:
+                precaution_map[disease] = precautions
+    print(f"  Merged precautions from precautions_df.csv")
+
 print(f"  Precautions: {len(precaution_map)} diseases")
+
+# ── Load NEW: Medications ──
+medication_map = {}
+med_path = os.path.join(DATASET_DIR, 'medications.csv')
+if os.path.exists(med_path):
+    med_df = pd.read_csv(med_path)
+    med_df.columns = med_df.columns.str.strip()
+    for _, row in med_df.iterrows():
+        disease = str(row['Disease']).strip()
+        try:
+            meds = ast.literal_eval(str(row['Medication']).strip())
+            medication_map[disease] = meds
+        except:
+            medication_map[disease] = [str(row['Medication']).strip()]
+    print(f"  Medications: {len(medication_map)} diseases")
+
+# ── Load NEW: Diets ──
+diet_map = {}
+diet_path = os.path.join(DATASET_DIR, 'diets.csv')
+if os.path.exists(diet_path):
+    diet_df = pd.read_csv(diet_path)
+    diet_df.columns = diet_df.columns.str.strip()
+    for _, row in diet_df.iterrows():
+        disease = str(row['Disease']).strip()
+        try:
+            diets = ast.literal_eval(str(row['Diet']).strip())
+            diet_map[disease] = diets
+        except:
+            diet_map[disease] = [str(row['Diet']).strip()]
+    print(f"  Diets: {len(diet_map)} diseases")
+
+# ── Load NEW: Workouts ──
+workout_map = {}
+workout_path = os.path.join(DATASET_DIR, 'workout_df.csv')
+if os.path.exists(workout_path):
+    workout_df = pd.read_csv(workout_path)
+    workout_df.columns = workout_df.columns.str.strip()
+    # Group workouts by disease
+    disease_col = [c for c in workout_df.columns if c.lower() == 'disease'][0]
+    workout_col = [c for c in workout_df.columns if c.lower() == 'workout'][0]
+    for disease, group in workout_df.groupby(disease_col):
+        workouts = group[workout_col].dropna().tolist()
+        workout_map[str(disease).strip()] = [str(w).strip() for w in workouts[:5]]
+    print(f"  Workouts: {len(workout_map)} diseases")
+
 
 # Get symptom columns
 symptom_cols = [col for col in df.columns if col.startswith('Symptom')]
 print(f"  Symptom columns: {len(symptom_cols)}")
 
 
+# ══════════════════════════════════════════════════════════════════════
 # STEP 2: Extract unique symptoms
+# ══════════════════════════════════════════════════════════════════════
 
 print("\n" + "=" * 60)
 print("STEP 2: Extracting unique symptoms...")
@@ -77,16 +210,24 @@ all_symptoms = set()
 for col in symptom_cols:
     symptoms_in_col = df[col].dropna().unique()
     for s in symptoms_in_col:
-        cleaned = str(s).strip()
-        if cleaned:
+        cleaned = str(s).strip().replace(' ', '_')
+        if cleaned and cleaned != 'nan':
             all_symptoms.add(cleaned)
+
+# Also add symptoms from severity map
+for s in severity_map.keys():
+    cleaned = str(s).strip().replace(' ', '_')
+    if cleaned:
+        all_symptoms.add(cleaned)
 
 all_symptoms = sorted(list(all_symptoms))
 print(f"  Found {len(all_symptoms)} unique symptoms")
 print(f"  Examples: {all_symptoms[:5]}")
 
 
+# ══════════════════════════════════════════════════════════════════════
 # STEP 3: Build SEVERITY-WEIGHTED feature vectors
+# ══════════════════════════════════════════════════════════════════════
 
 print("\n" + "=" * 60)
 print("STEP 3: Building severity-weighted feature vectors...")
@@ -98,12 +239,12 @@ def build_feature_vector(row, use_weights=True):
     for col in symptom_cols:
         symptom = row[col]
         if pd.notna(symptom):
-            symptom_clean = str(symptom).strip()
+            symptom_clean = str(symptom).strip().replace(' ', '_')
             if symptom_clean in all_symptoms:
                 idx = all_symptoms.index(symptom_clean)
                 if use_weights:
-                    # Use severity weight (default to 1 if not found)
-                    vector[idx] = severity_map.get(symptom_clean, 1)
+                    weight = severity_map.get(symptom_clean, severity_map.get(symptom_clean.replace('_', ' '), 1))
+                    vector[idx] = weight
                 else:
                     vector[idx] = 1
     return vector
@@ -111,7 +252,9 @@ def build_feature_vector(row, use_weights=True):
 # Build feature matrix with severity weights
 X = np.array([build_feature_vector(row, use_weights=True) for _, row in df.iterrows()])
 print(f"  Feature matrix shape: {X.shape}  (samples × symptoms)")
-print(f"  Using severity weights (range: {X[X > 0].min():.0f} - {X[X > 0].max():.0f})")
+non_zero = X[X > 0]
+if len(non_zero) > 0:
+    print(f"  Using severity weights (range: {non_zero.min():.0f} - {non_zero.max():.0f})")
 
 # Encode disease labels
 label_encoder = LabelEncoder()
@@ -119,24 +262,59 @@ y = label_encoder.fit_transform(df['Disease'])
 print(f"  Classes: {len(label_encoder.classes_)}")
 
 
-
-# STEP 4: Train-Test Split
+# ══════════════════════════════════════════════════════════════════════
+# STEP 4: Data Augmentation (reduce overfitting)
+# ══════════════════════════════════════════════════════════════════════
 
 print("\n" + "=" * 60)
-print("STEP 4: Splitting data (80% train / 20% test)...")
+print("STEP 4: Data augmentation (symptom dropout)...")
+print("=" * 60)
+
+# Add augmented samples by randomly dropping 1-2 symptoms
+np.random.seed(42)
+augmented_X = []
+augmented_y = []
+
+for i in range(len(X)):
+    non_zero_indices = np.where(X[i] > 0)[0]
+    if len(non_zero_indices) > 2:
+        # Create 2 augmented versions per sample
+        for _ in range(2):
+            aug = X[i].copy()
+            n_drop = np.random.randint(1, min(3, len(non_zero_indices)))
+            drop_indices = np.random.choice(non_zero_indices, size=n_drop, replace=False)
+            aug[drop_indices] = 0
+            augmented_X.append(aug)
+            augmented_y.append(y[i])
+
+X_aug = np.vstack([X, np.array(augmented_X)])
+y_aug = np.concatenate([y, np.array(augmented_y)])
+print(f"  Original samples: {len(X)}")
+print(f"  Augmented samples: {len(augmented_X)}")
+print(f"  Total training data: {len(X_aug)}")
+
+
+# ══════════════════════════════════════════════════════════════════════
+# STEP 5: Train-Test Split
+# ══════════════════════════════════════════════════════════════════════
+
+print("\n" + "=" * 60)
+print("STEP 5: Splitting data (80% train / 20% test)...")
 print("=" * 60)
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
+    X_aug, y_aug, test_size=0.2, random_state=42, stratify=y_aug
 )
 print(f"  Training samples: {len(X_train)}")
 print(f"  Testing samples:  {len(X_test)}")
 
 
-# STEP 5: Train BOTH RandomForest & GradientBoosting, pick best
+# ══════════════════════════════════════════════════════════════════════
+# STEP 6: Train BOTH RandomForest & GradientBoosting, pick best
+# ══════════════════════════════════════════════════════════════════════
 
 print("\n" + "=" * 60)
-print("STEP 5: Training classifiers...")
+print("STEP 6: Training classifiers...")
 print("=" * 60)
 
 # RandomForest
@@ -184,15 +362,15 @@ else:
 print(f"\n  🏆 Best Model: {best_name} ({best_accuracy * 100:.2f}%)")
 
 
-
-# STEP 6: Evaluate
+# ══════════════════════════════════════════════════════════════════════
+# STEP 7: Evaluate
+# ══════════════════════════════════════════════════════════════════════
 
 print("\n" + "=" * 60)
-print("STEP 6: Evaluating model performance...")
+print("STEP 7: Evaluating model performance...")
 print("=" * 60)
 
-# Cross-validation on best model
-cv_scores = cross_val_score(best_model, X, y, cv=5, scoring='accuracy')
+cv_scores = cross_val_score(best_model, X_aug, y_aug, cv=5, scoring='accuracy')
 print(f"\n  📊 Test Accuracy: {best_accuracy * 100:.2f}%")
 print(f"  📊 Cross-Validation: {cv_scores.mean() * 100:.2f}% (±{cv_scores.std() * 100:.2f}%)")
 
@@ -205,14 +383,14 @@ report = classification_report(
 print(report)
 
 
-
-# STEP 7: Build NLP synonym mapping
+# ══════════════════════════════════════════════════════════════════════
+# STEP 8: Build NLP synonym mapping
+# ══════════════════════════════════════════════════════════════════════
 
 print("=" * 60)
-print("STEP 7: Building NLP synonym mapping...")
+print("STEP 8: Building NLP synonym mapping...")
 print("=" * 60)
 
-# Map common natural language terms to dataset symptom names
 symptom_synonyms = {
     # General terms
     "headache": "headache",
@@ -284,6 +462,8 @@ symptom_synonyms = {
     "skin peeling": "skin_peeling",
     "blister": "blister",
     "blisters": "blister",
+    "nodal skin": "nodal_skin_eruptions",
+    "skin eruptions": "nodal_skin_eruptions",
 
     # Pain
     "joint pain": "joint_pain",
@@ -295,6 +475,7 @@ symptom_synonyms = {
     "chest pain": "chest_pain",
     "muscle pain": "muscle_pain",
     "body pain": "muscle_pain",
+    "hip pain": "hip_joint_pain",
 
     # Fatigue/Weakness
     "fatigue": "fatigue",
@@ -306,6 +487,7 @@ symptom_synonyms = {
     "lethargy": "lethargy",
     "lethargic": "lethargy",
     "no energy": "lethargy",
+    "malaise": "malaise",
 
     # Eyes
     "yellowish skin": "yellowish_skin",
@@ -316,6 +498,7 @@ symptom_synonyms = {
     "vision problems": "blurred_and_distorted_vision",
     "red eyes": "redness_of_eyes",
     "watery eyes": "watering_from_eyes",
+    "sunken eyes": "sunken_eyes",
 
     # Breathing
     "breathlessness": "breathlessness",
@@ -330,6 +513,8 @@ symptom_synonyms = {
     "losing weight": "weight_loss",
     "weight gain": "weight_gain",
     "gaining weight": "weight_gain",
+    "obesity": "obesity",
+    "overweight": "obesity",
 
     # Mental/Mood
     "anxiety": "anxiety",
@@ -351,7 +536,7 @@ symptom_synonyms = {
     "frequent urination": "continuous_feel_of_urine",
     "dark urine": "dark_urine",
     "yellow urine": "yellow_urine",
-    "smelly urine": "foul_smell_ofurine",
+    "smelly urine": "foul_smell_of_urine",
 
     # Other common
     "sweating": "sweating",
@@ -381,8 +566,6 @@ symptom_synonyms = {
     "heart pounding": "palpitations",
     "high blood sugar": "irregular_sugar_level",
     "blood sugar": "irregular_sugar_level",
-    "obesity": "obesity",
-    "overweight": "obesity",
     "bruising": "bruising",
     "bruises": "bruising",
     "bleeding": "stomach_bleeding",
@@ -402,16 +585,59 @@ symptom_synonyms = {
     "mucus": "mucoid_sputum",
     "sinus pressure": "sinus_pressure",
     "sinus": "sinus_pressure",
-    "sunken eyes": "sunken_eyes",
+    "muscle wasting": "muscle_wasting",
+    "patches in throat": "patches_in_throat",
+    "extra marital contacts": "extra_marital_contacts",
+    "pain behind eyes": "pain_behind_the_eyes",
+    "toxic look": "toxic_look_(typhos)",
+    "dischromic patches": "dischromic_patches",
+    "spotting urination": "spotting_urination",
+    "fluid overload": "fluid_overload",
+    "distention of abdomen": "distention_of_abdomen",
+    "belly bloating": "distention_of_abdomen",
+    "abnormal menstruation": "abnormal_menstruation",
+    "irregular periods": "abnormal_menstruation",
+    "belly swollen": "swelling_of_stomach",
+    "swollen stomach": "swelling_of_stomach",
+    "blood in sputum": "blood_in_sputum",
+    "coughing blood": "blood_in_sputum",
+    "prominent veins": "prominent_veins_on_calf",
+    "painful walking": "painful_walking",
+    "skin bruising": "bruising",
+    "small dents in nails": "small_dents_in_nails",
+    "inflammatory nails": "inflammatory_nails",
+    "altered sensorium": "altered_sensorium",
+    "internal itching": "internal_itching",
+    "receiving blood transfusion": "receiving_blood_transfusion",
+    "receiving unsterile injections": "receiving_unsterile_injections",
+    "rusty sputum": "rusty_sputum",
+    "lack of concentration": "lack_of_concentration",
+    "visual disturbances": "visual_disturbances",
+    "coma": "coma",
+    "stomach bleeding": "stomach_bleeding",
+    "cold hands and feets": "cold_hands_and_feets",
+    "cold hands": "cold_hands_and_feets",
+    "cold feet": "cold_hands_and_feets",
+    "throat swelling": "swelling_of_stomach",
+    "silver like dusting": "silver_like_dusting",
+    "red sore around nose": "red_sore_around_nose",
+    "yellow crust ooze": "yellow_crust_ooze",
+    "pain in anal region": "pain_in_anal_region",
+    "irregular sugar": "irregular_sugar_level",
+    "increased appetite": "increased_appetite",
+    "polyuria": "polyuria",
+    "watering from eyes": "watering_from_eyes",
 }
 
 print(f"  Built {len(symptom_synonyms)} synonym mappings")
 
 
-# STEP 8: Build disease info bundle
+# ══════════════════════════════════════════════════════════════════════
+# STEP 9: Build disease info bundle (with medications, diets, workouts)
+# ══════════════════════════════════════════════════════════════════════
 
 print("\n" + "=" * 60)
-print("STEP 8: Building disease info bundle...")
+print("STEP 9: Building disease info bundle...")
 print("=" * 60)
 
 # Classify disease severity
@@ -422,9 +648,9 @@ high_severity = [
 ]
 
 medium_severity = [
-    'Diabetes ', 'Hypertension ', 'Jaundice', 'Bronchial Asthma',
-    'Chronic cholestasis', 'Alcoholic hepatitis', 'Hyperthyroidism',
-    'Hypothyroidism'
+    'Diabetes ', 'Diabetes', 'Hypertension ', 'Hypertension', 'Jaundice',
+    'Bronchial Asthma', 'Chronic cholestasis', 'Alcoholic hepatitis',
+    'Hyperthyroidism', 'Hypothyroidism'
 ]
 
 disease_info = {}
@@ -437,18 +663,17 @@ for disease in label_encoder.classes_:
     else:
         severity = "low"
 
-    # Get description (try exact and stripped match)
+    # Get description
     desc = description_map.get(disease, '')
     if not desc:
         desc = description_map.get(disease.strip(), '')
-    # Try case-insensitive match
     if not desc:
         for k, v in description_map.items():
             if k.lower().strip() == disease.lower().strip():
                 desc = v
                 break
 
-    # Get precautions (try exact and stripped match)
+    # Get precautions
     prec = precaution_map.get(disease, [])
     if not prec:
         prec = precaution_map.get(disease.strip(), [])
@@ -458,27 +683,73 @@ for disease in label_encoder.classes_:
                 prec = v
                 break
 
+    # Get medications (NEW)
+    meds = medication_map.get(disease, [])
+    if not meds:
+        for k, v in medication_map.items():
+            if k.lower().strip() == disease.lower().strip():
+                meds = v
+                break
+
+    # Get diets (NEW)
+    diets = diet_map.get(disease, [])
+    if not diets:
+        for k, v in diet_map.items():
+            if k.lower().strip() == disease.lower().strip():
+                diets = v
+                break
+
+    # Get workouts (NEW)
+    workouts = workout_map.get(disease, [])
+    if not workouts:
+        for k, v in workout_map.items():
+            if k.lower().strip() == disease.lower().strip():
+                workouts = v
+                break
+
     disease_info[disease] = {
         "description": desc,
         "precautions": prec,
-        "severity": severity
+        "severity": severity,
+        "medications": meds,
+        "diets": diets,
+        "workouts": workouts
     }
 
 diseases_with_desc = sum(1 for d in disease_info.values() if d['description'])
 diseases_with_prec = sum(1 for d in disease_info.values() if d['precautions'])
+diseases_with_meds = sum(1 for d in disease_info.values() if d['medications'])
+diseases_with_diets = sum(1 for d in disease_info.values() if d['diets'])
+diseases_with_workouts = sum(1 for d in disease_info.values() if d['workouts'])
+
 print(f"  Diseases with descriptions: {diseases_with_desc}/{len(disease_info)}")
-print(f"  Diseases with precautions: {diseases_with_prec}/{len(disease_info)}")
-print(f"  Severity breakdown: High={sum(1 for d in disease_info.values() if d['severity']=='high')}, "
+print(f"  Diseases with precautions:  {diseases_with_prec}/{len(disease_info)}")
+print(f"  Diseases with medications:  {diseases_with_meds}/{len(disease_info)}")
+print(f"  Diseases with diets:        {diseases_with_diets}/{len(disease_info)}")
+print(f"  Diseases with workouts:     {diseases_with_workouts}/{len(disease_info)}")
+print(f"  Severity: High={sum(1 for d in disease_info.values() if d['severity']=='high')}, "
       f"Medium={sum(1 for d in disease_info.values() if d['severity']=='medium')}, "
       f"Low={sum(1 for d in disease_info.values() if d['severity']=='low')}")
 
-# STEP 9: Save all model artifacts
+
+# ══════════════════════════════════════════════════════════════════════
+# STEP 10: Save all model artifacts
+# ══════════════════════════════════════════════════════════════════════
 
 print("\n" + "=" * 60)
-print("STEP 9: Saving model artifacts...")
+print("STEP 10: Saving model artifacts...")
 print("=" * 60)
 
-# Clean old model files first
+# Preserve manually created files
+preserve_files = ['medical_faq.json', 'followup_questions.json']
+preserved = {}
+for pf in preserve_files:
+    pf_path = os.path.join(MODEL_DIR, pf)
+    if os.path.exists(pf_path):
+        with open(pf_path, 'r', encoding='utf-8') as f:
+            preserved[pf] = f.read()
+
+# Clean old model files
 for old_file in os.listdir(MODEL_DIR):
     old_path = os.path.join(MODEL_DIR, old_file)
     if os.path.isfile(old_path):
@@ -486,6 +757,13 @@ for old_file in os.listdir(MODEL_DIR):
             os.remove(old_path)
         except Exception:
             pass
+
+# Restore preserved files
+for pf, content in preserved.items():
+    pf_path = os.path.join(MODEL_DIR, pf)
+    with open(pf_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+    print(f"  ✅ Preserved:             {pf}")
 
 # Save the best model
 model_path = os.path.join(MODEL_DIR, 'model.joblib')
@@ -499,25 +777,25 @@ print(f"  ✅ Label encoder saved:   {encoder_path}")
 
 # Save symptom list
 symptoms_path = os.path.join(MODEL_DIR, 'symptom_columns.json')
-with open(symptoms_path, 'w') as f:
+with open(symptoms_path, 'w', encoding='utf-8') as f:
     json.dump(all_symptoms, f, indent=2)
 print(f"  ✅ Symptom list saved:    {symptoms_path}")
 
-# Save severity weights map
+# Save severity weights
 severity_path = os.path.join(MODEL_DIR, 'severity_weights.json')
-with open(severity_path, 'w') as f:
+with open(severity_path, 'w', encoding='utf-8') as f:
     json.dump(severity_map, f, indent=2)
 print(f"  ✅ Severity weights saved:{severity_path}")
 
-# Save disease info (descriptions, precautions, severity)
+# Save disease info (with medications, diets, workouts)
 disease_info_path = os.path.join(MODEL_DIR, 'disease_info.json')
-with open(disease_info_path, 'w') as f:
+with open(disease_info_path, 'w', encoding='utf-8') as f:
     json.dump(disease_info, f, indent=2)
 print(f"  ✅ Disease info saved:    {disease_info_path}")
 
 # Save synonym mapping
 synonyms_path = os.path.join(MODEL_DIR, 'symptom_synonyms.json')
-with open(synonyms_path, 'w') as f:
+with open(synonyms_path, 'w', encoding='utf-8') as f:
     json.dump(symptom_synonyms, f, indent=2)
 print(f"  ✅ Synonym mapping saved: {synonyms_path}")
 
@@ -529,25 +807,33 @@ metrics = {
     'gb_accuracy': float(gb_accuracy),
     'cv_accuracy_mean': float(cv_scores.mean()),
     'cv_accuracy_std': float(cv_scores.std()),
-    'n_samples': int(len(df)),
+    'n_samples_original': int(len(df)),
+    'n_samples_augmented': int(len(X_aug)),
     'n_symptoms': int(len(all_symptoms)),
     'n_diseases': int(len(label_encoder.classes_)),
     'n_synonyms': int(len(symptom_synonyms)),
     'feature_type': 'severity_weighted',
+    'augmentation': 'symptom_dropout',
+    'datasets_used': ['dataset.csv', 'Training.csv'],
     'diseases': list(label_encoder.classes_)
 }
 metrics_path = os.path.join(MODEL_DIR, 'metrics.json')
-with open(metrics_path, 'w') as f:
+with open(metrics_path, 'w', encoding='utf-8') as f:
     json.dump(metrics, f, indent=2)
 print(f"  ✅ Metrics saved:         {metrics_path}")
 
 print("\n" + "=" * 60)
 print(f"🎉 TRAINING COMPLETE!")
-print(f"   Best Model:  {best_name}")
-print(f"   Accuracy:    {best_accuracy * 100:.2f}%")
-print(f"   CV Accuracy: {cv_scores.mean() * 100:.2f}% (±{cv_scores.std() * 100:.2f}%)")
-print(f"   Features:    Severity-weighted ({len(all_symptoms)} symptoms)")
-print(f"   Diseases:    {len(label_encoder.classes_)}")
-print(f"   Synonyms:    {len(symptom_synonyms)} NLP mappings")
-print(f"   Saved to:    {MODEL_DIR}")
+print(f"   Best Model:      {best_name}")
+print(f"   Accuracy:         {best_accuracy * 100:.2f}%")
+print(f"   CV Accuracy:      {cv_scores.mean() * 100:.2f}% (±{cv_scores.std() * 100:.2f}%)")
+print(f"   Original Data:    {len(df)} samples")
+print(f"   Augmented Data:   {len(X_aug)} samples")
+print(f"   Features:         Severity-weighted ({len(all_symptoms)} symptoms)")
+print(f"   Diseases:         {len(label_encoder.classes_)}")
+print(f"   Synonyms:         {len(symptom_synonyms)} NLP mappings")
+print(f"   + Medications:    {diseases_with_meds} diseases")
+print(f"   + Diets:          {diseases_with_diets} diseases")
+print(f"   + Workouts:       {diseases_with_workouts} diseases")
+print(f"   Saved to:         {MODEL_DIR}")
 print("=" * 60)

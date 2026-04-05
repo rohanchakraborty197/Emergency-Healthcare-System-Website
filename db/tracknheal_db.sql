@@ -27,6 +27,23 @@ CREATE TABLE bookings (
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
+----- Doctor database -----
+CREATE TABLE IF NOT EXISTS doctors (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    specialization VARCHAR(100) NOT NULL,
+    hospital VARCHAR(255) DEFAULT NULL,
+    phone VARCHAR(20) DEFAULT NULL,
+    email VARCHAR(255) DEFAULT NULL,
+    available_days VARCHAR(100) DEFAULT 'Mon-Fri',
+    available_time VARCHAR(50) DEFAULT '9:00 AM - 5:00 PM',
+    rating DECIMAL(2, 1) DEFAULT 4.0,
+    image_url VARCHAR(500) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    degree VARCHAR(100) DEFAULT NULL,
+    password VARCHAR(255) DEFAULT NULL
+);
+
 CREATE TABLE IF NOT EXISTS doctor_appointments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
@@ -58,6 +75,7 @@ ADD COLUMN status ENUM(
 
 ALTER TABLE bookings ADD COLUMN user_id INT;
 
+---- ADMIN CREDENTIALS ----
 INSERT INTO
     admins (username, email, password)
 VALUES (
@@ -66,22 +84,7 @@ VALUES (
         'admin123'
     );
 
-CREATE TABLE IF NOT EXISTS doctors (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    specialization VARCHAR(100) NOT NULL,
-    degree VARCHAR(100),
-    hospital VARCHAR(255),
-    phone VARCHAR(20),
-    email VARCHAR(255),
-    available_days VARCHAR(100) DEFAULT 'Mon-Fri',
-    available_time VARCHAR(50) DEFAULT '9:00 AM - 5:00 PM',
-    rating DECIMAL(2, 1) DEFAULT 4.0,
-    image_url VARCHAR(500),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Insert sample doctors
+------- SAMPLE DOCTOR DETAILS -------
 INSERT INTO
     doctors (
         name,

@@ -191,19 +191,189 @@
             color: var(--primary-color);
         }
 
-        .tab-button {
-            width: 50%;
-            padding: 12px;
-            cursor: pointer;
-            border: none;
+        /* ===== ROLE TAB SYSTEM ===== */
+        .role-tabs {
+            display: flex;
             background: var(--secondary-color);
-            font-weight: 600;
-            transition: all 0.3s ease;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 25px;
+            position: relative;
         }
 
-        .tab-button.active {
-            background: var(--primary-color);
+        .role-tab {
+            flex: 1;
+            padding: 12px 8px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            font-size: 0.85em;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: #666;
+            z-index: 1;
+            position: relative;
+        }
+
+        .role-tab.active {
             color: white;
+        }
+
+        .role-tab .tab-icon {
+            font-size: 1.1em;
+        }
+
+        .role-tab-indicator {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            height: calc(100% - 8px);
+            width: calc(33.333% - 4px);
+            border-radius: 10px;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 0;
+        }
+
+        .role-tab-indicator.user {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .role-tab-indicator.admin {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .role-tab-indicator.doctor {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+        }
+
+        .role-form {
+            display: none;
+            animation: formSlideIn 0.35s ease;
+        }
+
+        .role-form.active {
+            display: block;
+        }
+
+        @keyframes formSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .role-header {
+            text-align: center;
+            margin-bottom: 22px;
+        }
+
+        .role-header .role-emoji {
+            font-size: 2.5em;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .role-header h3 {
+            font-size: 1.2em;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+
+        .role-header p {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .login-msg {
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            text-align: center;
+            display: none;
+        }
+
+        .login-msg.error {
+            display: block;
+            background: #fff5f5;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+            animation: shake 0.4s ease;
+        }
+
+        .login-msg.success {
+            display: block;
+            background: #f0fff4;
+            color: #276749;
+            border: 1px solid #9ae6b4;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-4px);
+            }
+
+            75% {
+                transform: translateX(4px);
+            }
+        }
+
+        .toggle-link {
+            text-align: center;
+            margin-top: 18px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .toggle-link a {
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .toggle-link a:hover {
+            text-decoration: underline;
+        }
+
+        .submit-btn.admin-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .submit-btn.admin-btn:hover {
+            background: linear-gradient(135deg, #c0392b, #a93226);
+        }
+
+        .submit-btn.doctor-btn-submit {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+        }
+
+        .submit-btn.doctor-btn-submit:hover {
+            background: linear-gradient(135deg, #219a52, #27ae60);
+        }
+
+        .submit-btn.user-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .submit-btn.user-btn:hover {
+            background: linear-gradient(135deg, #5a6fd6, #6a4299);
         }
 
         .form-content {
@@ -974,8 +1144,15 @@
         }
 
         @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4); }
-            50% { box-shadow: 0 4px 30px rgba(102, 126, 234, 0.7); }
+
+            0%,
+            100% {
+                box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 4px 30px rgba(102, 126, 234, 0.7);
+            }
         }
 
         .chat-btn:hover {
@@ -1025,12 +1202,20 @@
         }
 
         @keyframes blink-dot {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
         }
 
         .chat-body {
             flex: 1;
+            min-height: 0;
             padding: 15px;
             overflow-y: auto;
             background: #f5f6fa;
@@ -1047,11 +1232,19 @@
             line-height: 1.5;
             word-wrap: break-word;
             animation: chatFadeIn 0.3s ease;
+            flex-shrink: 0;
         }
 
         @keyframes chatFadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .bot-msg {
@@ -1060,7 +1253,7 @@
             border: 1px solid #e8e8e8;
             align-self: flex-start;
             border-bottom-left-radius: 3px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         }
 
         .user-msg {
@@ -1124,7 +1317,7 @@
 
         .chat-action-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
         }
 
         .chat-action-btn.ambulance-btn {
@@ -1145,8 +1338,9 @@
             border: 1px solid #e8e8e8;
             max-width: 92%;
             align-self: flex-start;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
             animation: chatFadeIn 0.4s ease;
+            flex-shrink: 0;
         }
 
         .diagnosis-header {
@@ -1224,9 +1418,17 @@
             transition: width 0.6s ease;
         }
 
-        .confidence-bar-fill.high { background: linear-gradient(90deg, #e74c3c, #ff6b6b); }
-        .confidence-bar-fill.medium { background: linear-gradient(90deg, #f39c12, #fdcb6e); }
-        .confidence-bar-fill.low { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+        .confidence-bar-fill.high {
+            background: linear-gradient(90deg, #e74c3c, #ff6b6b);
+        }
+
+        .confidence-bar-fill.medium {
+            background: linear-gradient(90deg, #f39c12, #fdcb6e);
+        }
+
+        .confidence-bar-fill.low {
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+        }
 
         .confidence-pct {
             font-size: 0.75em;
@@ -1401,10 +1603,6 @@
     <section id="home">
         <button onclick="openBookingModal()">Book Ambulance Now 🚑</button>
 
-        <div class="search-bar">
-            <input type="text" id="quickPickupLocation" placeholder="Pickup Location">
-            <button class="submit-btn" onclick="openBookingWithLocation()">Search</button>
-        </div>
 
         <div>
             <h3>📍 24/7 Emergency Support</h3>
@@ -1491,49 +1689,164 @@
 
             <span class="close" onclick="closeModal()">&times;</span>
 
-            <!-- Tabs -->
-            <div style="display:flex;">
-                <button class="tab-button active" onclick="switchTab(event,'login')">Login</button>
-                <button class="tab-button" onclick="switchTab(event,'signup')">Sign Up</button>
+            <!-- Role Tabs -->
+            <div class="role-tabs">
+                <div class="role-tab-indicator user" id="tabIndicator"></div>
+                <button class="role-tab active" data-role="user" onclick="switchRoleTab('user', this)">
+                    <span class="tab-icon">👤</span> User
+                </button>
+                <button class="role-tab" data-role="admin" onclick="switchRoleTab('admin', this)">
+                    <span class="tab-icon">🛡️</span> Admin
+                </button>
+                <button class="role-tab" data-role="doctor" onclick="switchRoleTab('doctor', this)">
+                    <span class="tab-icon">🩺</span> Doctor
+                </button>
             </div>
 
-            <!-- Login Form -->
-            <div id="login" class="form-content active">
-                <div class="input-group">
-                    <label>Email</label>
-                    <input type="email" id="loginEmail" required>
+            <!-- ===== USER FORM (Login + Signup toggle) ===== -->
+            <div id="userForm" class="role-form active">
+                <div class="role-header">
+                    <span class="role-emoji">👤</span>
+                    <h3 id="userFormTitle">Welcome Back</h3>
+                    <p id="userFormSubtitle">Login to your account</p>
                 </div>
 
-                <div class="input-group">
-                    <label>Password</label>
-                    <input type="password" id="loginPassword" required>
+                <div id="userLoginMsg" class="login-msg"></div>
+
+                <div id="userLoginFields">
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                    </div>
+                    <button class="submit-btn user-btn" onclick="handleLogin()">Login</button>
+                    <div class="toggle-link">
+                        Don't have an account? <a onclick="toggleUserSignup(true)">Sign Up</a>
+                    </div>
                 </div>
 
-                <button class="submit-btn" onclick="handleLogin()">Login</button>
+                <div id="userSignupFields" style="display: none;">
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" id="signupName" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="email" id="signupEmail" placeholder="Enter your email" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="signupPassword" placeholder="Create a password" required>
+                    </div>
+                    <button class="submit-btn user-btn" onclick="handleSignup()">Create Account</button>
+                    <div class="toggle-link">
+                        Already have an account? <a onclick="toggleUserSignup(false)">Login</a>
+                    </div>
+                </div>
             </div>
 
-            <!-- Signup Form -->
-            <div id="signup" class="form-content">
-                <div class="input-group">
-                    <label>Name</label>
-                    <input type="text" id="signupName" required>
+            <!-- ===== ADMIN FORM ===== -->
+            <div id="adminForm" class="role-form">
+                <div class="role-header">
+                    <span class="role-emoji">🛡️</span>
+                    <h3>Admin Portal</h3>
+                    <p>Access the management dashboard</p>
                 </div>
 
-                <div class="input-group">
-                    <label>Email</label>
-                    <input type="email" id="signupEmail" required>
-                </div>
+                <div id="adminLoginMsg" class="login-msg"></div>
 
+                <div class="input-group">
+                    <label>Admin Email</label>
+                    <input type="email" id="adminEmail" placeholder="Enter admin email" required>
+                </div>
                 <div class="input-group">
                     <label>Password</label>
-                    <input type="password" id="signupPassword" required>
+                    <input type="password" id="adminPassword" placeholder="Enter admin password" required>
+                </div>
+                <button class="submit-btn admin-btn" onclick="handleAdminLogin()">🔐 Admin Login</button>
+            </div>
+
+            <!-- ===== DOCTOR FORM ===== -->
+            <div id="doctorForm" class="role-form">
+                <div class="role-header">
+                    <span class="role-emoji">🩺</span>
+                    <h3 id="doctorFormTitle">Doctor Portal</h3>
+                    <p id="doctorFormSubtitle">View your appointments & patients</p>
                 </div>
 
-                <button class="submit-btn" onclick="handleSignup()">Create Account</button>
+                <div id="doctorLoginMsg" class="login-msg"></div>
+
+                <!-- Doctor Login Fields -->
+                <div id="doctorLoginFields">
+                    <div class="input-group">
+                        <label>Doctor Email</label>
+                        <input type="email" id="doctorEmail" placeholder="Enter your email" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="doctorPassword" placeholder="Enter your password" required>
+                    </div>
+                    <button class="submit-btn doctor-btn-submit" onclick="handleDoctorLogin()">🩺 Doctor Login</button>
+                    <div class="toggle-link">
+                        New doctor? <a onclick="toggleDoctorSignup(true)">Sign Up Here</a>
+                    </div>
+                </div>
+
+                <!-- Doctor Signup Fields -->
+                <div id="doctorSignupFields" style="display: none;">
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" id="docSignupName" placeholder="Dr. John Doe" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="email" id="docSignupEmail" placeholder="john.doe@clinic.com" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="docSignupPassword" placeholder="Create a password" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Specialization</label>
+                        <input type="text" id="docSignupSpec" placeholder="e.g., Cardiologist" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Degree</label>
+                        <input type="text" id="docSignupDegree" placeholder="e.g., MBBS, MD" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Hospital/Clinic</label>
+                        <input type="text" id="docSignupHospital" placeholder="City General Hospital" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Phone</label>
+                        <input type="tel" id="docSignupPhone" placeholder="Enter phone number" required>
+                    </div>
+                    <div class="input-group" style="display: flex; gap: 10px;">
+                        <div style="flex:1;">
+                            <label>Available Days</label>
+                            <input type="text" id="docSignupDays" placeholder="Mon-Fri" value="Mon-Fri">
+                        </div>
+                        <div style="flex:1;">
+                            <label>Available Time</label>
+                            <input type="text" id="docSignupTime" placeholder="9:00 AM - 5:00 PM"
+                                value="9:00 AM - 5:00 PM">
+                        </div>
+                    </div>
+                    <button class="submit-btn doctor-btn-submit" onclick="handleDoctorSignup()">🩺 Create Doctor
+                        Account</button>
+                    <div class="toggle-link">
+                        Already have an account? <a onclick="toggleDoctorSignup(false)">Login</a>
+                    </div>
+                </div>
             </div>
 
         </div>
     </div>
+
 
     <!---------------- BOOKING MODAL ---------------->
     <div id="bookingModal" class="modal booking-modal">
@@ -1686,13 +1999,14 @@
         <div class="chat-header">
             <div class="chat-header-info">
                 <div class="chat-header-dot"></div>
-                <span>AI Health Assistant (ML)</span>
+                <span>AI Medical Chatbot</span>
             </div>
             <span style="cursor:pointer; font-size:1.1em;" onclick="toggleChat()">✖</span>
         </div>
         <div class="chat-body" id="chatBody">
             <div class="chat-message bot-msg">
-                Hello! 👋 I'm your AI Health Assistant powered by custom ML. Describe your symptoms (e.g., "I have fever and headache") and I'll analyze them.
+                Hello! 👋 I'm your AI Medical Chatbot. Describe your symptoms (e.g., "I have fever
+                and headache") and I'll analyze them.
             </div>
         </div>
         <div class="chat-input-area">
@@ -1720,9 +2034,10 @@
         function updateAuthUI() {
             const authSection = document.getElementById('authSection');
             if (currentUser) {
+                const historyLabel = currentUser.role === 'doctor' ? '👨‍⚕️ My Patients' : '📋 My Bookings';
                 authSection.innerHTML = `
                     <div class="user-info">
-                        <button class="my-bookings-btn" onclick="openHistoryModal()">📋 My Bookings</button>
+                        <button class="my-bookings-btn" onclick="openHistoryModal()">${historyLabel}</button>
                         <span class="user-name">👤 ${currentUser.name}</span>
                         <button class="logout-btn" onclick="handleLogout()">Logout</button>
                     </div>
@@ -1736,7 +2051,9 @@
         function handleLogout() {
             currentUser = null;
             sessionStorage.removeItem('currentUser');
+            sessionStorage.removeItem('doctorUser');
             updateAuthUI();
+            loadFrontendDoctors();
             alert('Logged out successfully!');
         }
 
@@ -1760,24 +2077,90 @@
         // ✅ Close modal
         function closeModal() {
             document.getElementById("loginModal").style.display = "none";
+            // Clear all messages
+            document.querySelectorAll('.login-msg').forEach(el => { el.className = 'login-msg'; el.innerHTML = ''; });
         }
 
-        // ✅ Switch tabs
-        function switchTab(event, tabName) {
-            document.querySelectorAll(".form-content").forEach(box => box.classList.remove("active"));
-            document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
-            document.getElementById(tabName).classList.add("active");
-            event.target.classList.add("active");
+        // ✅ Switch role tabs (User / Admin / Doctor)
+        function switchRoleTab(role, btn) {
+            // Update tab indicator position + color
+            const indicator = document.getElementById('tabIndicator');
+            indicator.className = 'role-tab-indicator ' + role;
+            const roles = ['user', 'admin', 'doctor'];
+            const idx = roles.indexOf(role);
+            indicator.style.left = `calc(${idx * 33.333}% + 4px)`;
+
+            // Update tab active states
+            document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Show correct form
+            document.querySelectorAll('.role-form').forEach(f => f.classList.remove('active'));
+            document.getElementById(role + 'Form').classList.add('active');
+
+            // Clear messages
+            document.querySelectorAll('.login-msg').forEach(el => { el.className = 'login-msg'; el.innerHTML = ''; });
         }
 
-        /* ✅ SIGNUP → POST → backend */
+        // ✅ Toggle between User Login & Signup
+        function toggleUserSignup(showSignup) {
+            const loginFields = document.getElementById('userLoginFields');
+            const signupFields = document.getElementById('userSignupFields');
+            const title = document.getElementById('userFormTitle');
+            const subtitle = document.getElementById('userFormSubtitle');
+            const msg = document.getElementById('userLoginMsg');
+            msg.className = 'login-msg'; msg.innerHTML = '';
+
+            if (showSignup) {
+                loginFields.style.display = 'none';
+                signupFields.style.display = 'block';
+                title.textContent = 'Create Account';
+                subtitle.textContent = 'Join TrackNHeal today';
+            } else {
+                loginFields.style.display = 'block';
+                signupFields.style.display = 'none';
+                title.textContent = 'Welcome Back';
+                subtitle.textContent = 'Login to your account';
+            }
+        }
+
+        // ✅ Toggle between Doctor Login & Signup
+        function toggleDoctorSignup(showSignup) {
+            const loginFields = document.getElementById('doctorLoginFields');
+            const signupFields = document.getElementById('doctorSignupFields');
+            const title = document.getElementById('doctorFormTitle');
+            const subtitle = document.getElementById('doctorFormSubtitle');
+            const msg = document.getElementById('doctorLoginMsg');
+            msg.className = 'login-msg'; msg.innerHTML = '';
+
+            if (showSignup) {
+                loginFields.style.display = 'none';
+                signupFields.style.display = 'block';
+                title.textContent = 'Doctor Registration';
+                subtitle.textContent = 'Join the provider network';
+            } else {
+                loginFields.style.display = 'block';
+                signupFields.style.display = 'none';
+                title.textContent = 'Doctor Portal';
+                subtitle.textContent = 'View your appointments & patients';
+            }
+        }
+
+        // ✅ Show login message helper
+        function showLoginMsg(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = message;
+            el.className = 'login-msg ' + type;
+        }
+
+        /* ✅ USER SIGNUP → POST → backend */
         function handleSignup() {
             const name = document.getElementById("signupName").value;
             const email = document.getElementById("signupEmail").value;
             const password = document.getElementById("signupPassword").value;
 
             if (!name || !email || !password) {
-                alert('Please fill in all fields');
+                showLoginMsg('userLoginMsg', '⚠️ Please fill in all fields', 'error');
                 return;
             }
 
@@ -1788,24 +2171,26 @@
             })
                 .then(r => r.json())
                 .then(data => {
-                    alert(data.message);
                     if (data.message === "Signup successful") {
-                        // Auto-login after signup
                         currentUser = { id: data.userId, name: name, email: email };
                         sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
                         updateAuthUI();
                         closeModal();
+                        alert('🎉 Account created! Welcome to TrackNHeal.');
+                    } else {
+                        showLoginMsg('userLoginMsg', '❌ ' + data.message, 'error');
                     }
-                });
+                })
+                .catch(() => showLoginMsg('userLoginMsg', '❌ Network error. Please try again.', 'error'));
         }
 
-        /* ✅ LOGIN → POST → backend */
+        /* ✅ USER LOGIN → POST → backend */
         function handleLogin() {
             const email = document.getElementById("loginEmail").value;
             const password = document.getElementById("loginPassword").value;
 
             if (!email || !password) {
-                alert('Please fill in all fields');
+                showLoginMsg('userLoginMsg', '⚠️ Please fill in all fields', 'error');
                 return;
             }
 
@@ -1821,10 +2206,139 @@
                         sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
                         updateAuthUI();
                         closeModal();
-                        alert('Login successful! You can now book an ambulance.');
+                        alert('✅ Login successful! Welcome back.');
                     } else {
-                        alert(data.message);
+                        showLoginMsg('userLoginMsg', '❌ ' + data.message, 'error');
                     }
+                })
+                .catch(() => showLoginMsg('userLoginMsg', '❌ Network error. Please try again.', 'error'));
+        }
+
+        /* ✅ ADMIN LOGIN → POST → backend → redirect to admin.html */
+        function handleAdminLogin() {
+            const email = document.getElementById("adminEmail").value;
+            const password = document.getElementById("adminPassword").value;
+
+            if (!email || !password) {
+                showLoginMsg('adminLoginMsg', '⚠️ Please fill in all fields', 'error');
+                return;
+            }
+
+            fetch("http://localhost:3000/admin/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        showLoginMsg('adminLoginMsg', '✅ Login successful!', 'success');
+                        // Store admin session
+                        sessionStorage.setItem('adminUser', JSON.stringify({
+                            id: data.adminId,
+                            name: data.adminName,
+                            email: email
+                        }));
+                        setTimeout(() => {
+                            window.location.href = 'admin.html';
+                        }, 800);
+                    } else {
+                        showLoginMsg('adminLoginMsg', '❌ ' + data.message, 'error');
+                    }
+                })
+                .catch(() => showLoginMsg('adminLoginMsg', '❌ Network error. Please try again.', 'error'));
+        }
+
+        /* ✅ DOCTOR LOGIN → POST → backend */
+        function handleDoctorLogin() {
+            const email = document.getElementById("doctorEmail").value;
+            const password = document.getElementById("doctorPassword").value;
+
+            if (!email || !password) {
+                showLoginMsg('doctorLoginMsg', '⚠️ Please fill in all fields', 'error');
+                return;
+            }
+
+            fetch("http://localhost:3000/doctor/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        showLoginMsg('doctorLoginMsg', '✅ ' + data.message, 'success');
+                        // Store doctor session
+                        sessionStorage.setItem('doctorUser', JSON.stringify({
+                            id: data.doctorId,
+                            name: data.doctorName,
+                            email: email,
+                            specialization: data.specialization
+                        }));
+                        // Also log them in as a user for booking features
+                        currentUser = { id: data.doctorId, name: data.doctorName, email: email, role: 'doctor' };
+                        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        updateAuthUI();
+                        loadFrontendDoctors();
+                        setTimeout(() => {
+                            closeModal();
+                            alert('✅ Welcome, ' + data.doctorName + '!');
+                        }, 600);
+                    } else {
+                        showLoginMsg('doctorLoginMsg', '❌ ' + data.message, 'error');
+                    }
+                })
+                .catch(() => showLoginMsg('doctorLoginMsg', '❌ Network error. Please try again.', 'error'));
+        }
+
+        /* ✅ DOCTOR SIGNUP → POST → backend */
+        function handleDoctorSignup() {
+            const name = document.getElementById("docSignupName").value.trim();
+            const email = document.getElementById("docSignupEmail").value.trim();
+            const password = document.getElementById("docSignupPassword").value.trim();
+            const specialization = document.getElementById("docSignupSpec").value.trim();
+            const degree = document.getElementById("docSignupDegree").value.trim();
+            const hospital = document.getElementById("docSignupHospital").value.trim();
+            const phone = document.getElementById("docSignupPhone").value.trim();
+            const available_days = document.getElementById("docSignupDays").value.trim();
+            const available_time = document.getElementById("docSignupTime").value.trim();
+
+            if (!name || !email || !password || !specialization) {
+                showLoginMsg('doctorLoginMsg', '⚠️ Name, Email, Password, and Specialization are required fields.', 'error');
+                return;
+            }
+
+            const payload = {
+                name, email, password, specialization, degree, hospital, phone,
+                available_days: available_days || 'Mon-Fri',
+                available_time: available_time || '9:00 AM - 5:00 PM'
+            };
+
+            const submitBtn = document.querySelector('#doctorSignupFields .doctor-btn-submit');
+            submitBtn.textContent = 'Registering...';
+            submitBtn.disabled = true;
+
+            fetch("http://localhost:3000/doctor/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+                .then(r => r.json())
+                .then(data => {
+                    submitBtn.textContent = '🩺 Create Doctor Account';
+                    submitBtn.disabled = false;
+                    if (data.success) {
+                        alert('🎉 Doctor account registered successfully! You can now log in.');
+                        toggleDoctorSignup(false);
+                        loadFrontendDoctors(); // Refresh the homepage doctor list immediately
+                    } else {
+                        showLoginMsg('doctorLoginMsg', '❌ ' + (data.message || 'Registration failed.'), 'error');
+                    }
+                })
+                .catch(() => {
+                    submitBtn.textContent = '🩺 Create Doctor Account';
+                    submitBtn.disabled = false;
+                    showLoginMsg('doctorLoginMsg', '❌ Network error. Please try again.', 'error');
                 });
         }
 
@@ -1883,6 +2397,9 @@
             if (e.key === "Enter") sendMessage();
         }
 
+        // Track accumulated symptoms for multi-turn diagnosis
+        let chatAccumulatedSymptoms = [];
+
         async function sendMessage() {
             const input = document.getElementById("chatInput");
             const message = input.value.trim();
@@ -1893,13 +2410,16 @@
             input.value = "";
 
             // Bot "Analyzing" indicator
-            const typingId = appendMessage("🧠 Analyzing symptoms...", 'bot', true);
+            const typingId = appendMessage("🧠 Analyzing...", 'bot', true);
 
             try {
                 const res = await fetch("http://localhost:3000/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message })
+                    body: JSON.stringify({
+                        message,
+                        accumulatedSymptoms: chatAccumulatedSymptoms
+                    })
                 });
                 const data = await res.json();
 
@@ -1908,11 +2428,20 @@
                 if (typingEl) typingEl.remove();
 
                 if (data.success) {
+                    // Track accumulated symptoms from backend
+                    if (data.accumulatedSymptoms && data.accumulatedSymptoms.length > 0) {
+                        chatAccumulatedSymptoms = [...new Set([...chatAccumulatedSymptoms, ...data.accumulatedSymptoms])];
+                    }
+                    // Clear accumulated symptoms after a diagnosis
+                    if (data.accumulatedSymptoms && data.accumulatedSymptoms.length === 0) {
+                        chatAccumulatedSymptoms = [];
+                    }
+
                     // If richData is available, render a diagnosis card
                     if (data.richData) {
                         renderDiagnosisCard(data.richData, data.action);
                     } else {
-                        // Simple text reply (greetings, help, etc.)
+                        // Simple text reply (greetings, FAQ, follow-ups, etc.)
                         let botReply = data.reply.replace(/\n/g, '<br>');
                         botReply = botReply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                         appendMessage(botReply, 'bot');
@@ -1957,6 +2486,28 @@
                     </div>`;
             }
 
+            // Extra info (Medications, Diets, Workouts)
+            let extraInfoHtml = '';
+
+            if (rd.medications && rd.medications.length > 0) {
+                extraInfoHtml += `
+                    <div style="margin-top: 8px; font-size: 0.9em;">
+                        <span style="font-weight: 600; color: #555;">💊 Medications:</span> ${rd.medications.join(', ')}
+                    </div>`;
+            }
+            if (rd.diets && rd.diets.length > 0) {
+                extraInfoHtml += `
+                    <div style="margin-top: 6px; font-size: 0.9em;">
+                        <span style="font-weight: 600; color: #555;">🥗 Diet:</span> ${rd.diets.join(', ')}
+                    </div>`;
+            }
+            if (rd.workouts && rd.workouts.length > 0) {
+                extraInfoHtml += `
+                    <div style="margin-top: 6px; margin-bottom: 8px; font-size: 0.9em;">
+                        <span style="font-weight: 600; color: #555;">🏃‍♂️ Workout:</span> ${rd.workouts.join(', ')}
+                    </div>`;
+            }
+
             // Differential diagnoses
             let diffHtml = '';
             if (rd.top3 && rd.top3.length > 1) {
@@ -1964,15 +2515,15 @@
                     <div class="diagnosis-diff">
                         <div class="diagnosis-diff-title">Differential Diagnoses</div>
                         ${rd.top3.map(t => {
-                            const sEmoji = t.severity === 'high' ? '🔴' : t.severity === 'medium' ? '🟠' : '🟢';
-                            return `
+                    const sEmoji = t.severity === 'high' ? '🔴' : t.severity === 'medium' ? '🟠' : '🟢';
+                    return `
                             <div class="diff-item">
                                 <span style="font-size:0.85em">${sEmoji}</span>
                                 <span class="diff-item-name">${t.disease}</span>
                                 <div class="diff-bar-bg"><div class="diff-bar-fill" style="width:${t.confidence}%"></div></div>
                                 <span class="diff-pct">${t.confidence}%</span>
                             </div>`;
-                        }).join('')}
+                }).join('')}
                     </div>`;
             }
 
@@ -1988,6 +2539,28 @@
                 actionsHtml = `
                     <div class="diagnosis-actions">
                         <button class="chat-action-btn doctor-btn" onclick="document.getElementById('doctors').scrollIntoView({behavior:'smooth'}); toggleChat();">🩺 Book Doctor</button>
+                    </div>`;
+            }
+
+            // Available doctors matching the specialist
+            let doctorsHtml = '';
+            if (rd.availableDoctors && rd.availableDoctors.length > 0) {
+                doctorsHtml = `
+                    <div class="diagnosis-doctors" style="margin-top: 10px; padding: 10px; background: rgba(102,126,234,0.08); border-radius: 10px;">
+                        <div style="font-weight: 600; font-size: 0.85em; color: #667eea; margin-bottom: 8px;">🏥 Available Doctors</div>
+                        ${rd.availableDoctors.map(doc => {
+                    const escapedName = (doc.name || '').replace(/'/g, "\\'");
+                    const escapedSpec = (doc.specialization || '').replace(/'/g, "\\'");
+                    const escapedDeg = (doc.degree || '').replace(/'/g, "\\'");
+                    return `
+                            <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px; margin-bottom:5px; background:white; border-radius:8px; font-size:0.82em;">
+                                <div>
+                                    <strong>${doc.name}</strong> <span style="color:#888;">(${doc.degree || doc.specialization})</span><br>
+                                    <span style="color:#999; font-size:0.9em;">${doc.hospital || 'TrackNHeal'} ⭐${doc.rating || '4.0'}</span>
+                                </div>
+                                <button onclick="openApptModal('${escapedName}','${escapedSpec}','${escapedDeg}'); toggleChat();" style="background:#667eea; color:white; border:none; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.85em; white-space:nowrap;">Book</button>
+                            </div>`;
+                }).join('')}
                     </div>`;
             }
 
@@ -2007,14 +2580,26 @@
                         ${desc ? `<div class="diagnosis-desc">${desc}</div>` : ''}
                         ${symptomsHtml}
                         ${precautionsHtml}
+                        ${extraInfoHtml}
                         <div class="diagnosis-specialist">👨‍⚕️ Recommended: ${rd.specialist}</div>
+                        ${doctorsHtml}
                         ${diffHtml}
                     </div>
                     ${actionsHtml}
                 </div>`;
 
             chatBody.insertAdjacentHTML('beforeend', cardHtml);
-            chatBody.scrollTop = chatBody.scrollHeight;
+            scrollChatToBottom();
+        }
+
+        function scrollChatToBottom() {
+            const chatBody = document.getElementById("chatBody");
+            // Use requestAnimationFrame + setTimeout to ensure DOM has fully laid out
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                }, 50);
+            });
         }
 
         function appendMessage(text, sender, isTyping = false) {
@@ -2032,7 +2617,7 @@
             }
 
             chatBody.appendChild(msgDiv);
-            chatBody.scrollTop = chatBody.scrollHeight;
+            scrollChatToBottom();
             return msgDiv.id;
         }
 
@@ -2152,45 +2737,57 @@
             `;
 
             try {
-                // Fetch both ambulance bookings and doctor appointments in parallel
-                const [bookingsRes, appointmentsRes] = await Promise.all([
-                    fetch(`/user/bookings/${currentUser.id}`).then(r => r.json()).catch(() => ({ success: false })),
-                    fetch(`/user/appointments/${currentUser.id}`).then(r => r.json()).catch(() => ({ success: false }))
-                ]);
+                let bookingsRes = { success: false };
+                let appointmentsRes = { success: false };
+
+                // Role-based logic to fetch data
+                if (currentUser.role === 'doctor') {
+                    appointmentsRes = await fetch(`/doctor/appointments/${encodeURIComponent(currentUser.name)}`).then(r => r.json()).catch(() => ({ success: false }));
+                } else {
+                    const res = await Promise.all([
+                        fetch(`/user/bookings/${currentUser.id}`).then(r => r.json()).catch(() => ({ success: false })),
+                        fetch(`/user/appointments/${currentUser.id}`).then(r => r.json()).catch(() => ({ success: false }))
+                    ]);
+                    bookingsRes = res[0];
+                    appointmentsRes = res[1];
+                }
 
                 let html = '';
                 const hasBookings = bookingsRes.success && bookingsRes.bookings && bookingsRes.bookings.length > 0;
                 const hasAppointments = appointmentsRes.success && appointmentsRes.appointments && appointmentsRes.appointments.length > 0;
 
-                // === Ambulance Bookings Section ===
-                html += '<h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 1.1em;">🚑 Ambulance Bookings</h3>';
-                if (hasBookings) {
-                    html += bookingsRes.bookings.map(booking => `
-                        <div class="history-item" id="booking-${booking.id}">
-                            <div class="history-item-header">
-                                <span class="history-item-id">Booking #${booking.id}</span>
-                                <span class="history-status ${booking.status}">${booking.status}</span>
+                // === Ambulance Bookings Section (Users Only) ===
+                if (currentUser.role !== 'doctor') {
+                    html += '<h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 1.1em;">🚑 Ambulance Bookings</h3>';
+                    if (hasBookings) {
+                        html += bookingsRes.bookings.map(booking => `
+                            <div class="history-item" id="booking-${booking.id}">
+                                <div class="history-item-header">
+                                    <span class="history-item-id">Booking #${booking.id}</span>
+                                    <span class="history-status ${booking.status}">${booking.status}</span>
+                                </div>
+                                <div class="history-item-details">
+                                    <div><span>Patient:</span> <strong>${escapeHtml(booking.patient_name)}</strong></div>
+                                    <div><span>Phone:</span> <strong>${escapeHtml(booking.phone)}</strong></div>
+                                    <div><span>Pickup:</span> <strong>${escapeHtml(booking.pickup_location)}</strong></div>
+                                    <div><span>Destination:</span> <strong>${escapeHtml(booking.drop_location)}</strong></div>
+                                    <div><span>Emergency:</span> <strong>${booking.emergency_type}</strong></div>
+                                    <div><span>Date:</span> <strong>${formatDate(booking.created_at)}</strong></div>
+                                </div>
+                                ${(booking.status === 'pending' || booking.status === 'dispatched') ?
+                                `<button class="cancel-booking-btn" onclick="cancelBooking(${booking.id})">❌ Cancel Booking</button>` : ''}
                             </div>
-                            <div class="history-item-details">
-                                <div><span>Patient:</span> <strong>${escapeHtml(booking.patient_name)}</strong></div>
-                                <div><span>Phone:</span> <strong>${escapeHtml(booking.phone)}</strong></div>
-                                <div><span>Pickup:</span> <strong>${escapeHtml(booking.pickup_location)}</strong></div>
-                                <div><span>Destination:</span> <strong>${escapeHtml(booking.drop_location)}</strong></div>
-                                <div><span>Emergency:</span> <strong>${booking.emergency_type}</strong></div>
-                                <div><span>Date:</span> <strong>${formatDate(booking.created_at)}</strong></div>
-                            </div>
-                            ${(booking.status === 'pending' || booking.status === 'dispatched') ?
-                            `<button class="cancel-booking-btn" onclick="cancelBooking(${booking.id})">❌ Cancel Booking</button>` : ''}
-                        </div>
-                    `).join('');
-                } else {
-                    html += `<div class="history-empty" style="padding: 20px;">
-                        <p style="color: #999; font-size: 0.95em;">No ambulance bookings yet.</p>
-                    </div>`;
+                        `).join('');
+                    } else {
+                        html += `<div class="history-empty" style="padding: 20px;">
+                            <p style="color: #999; font-size: 0.95em;">No ambulance bookings yet.</p>
+                        </div>`;
+                    }
                 }
 
                 // === Doctor Appointments Section ===
-                html += '<h3 style="color: #667eea; margin: 25px 0 15px; font-size: 1.1em; border-top: 1px solid #eee; padding-top: 20px;">🩺 Doctor Appointments</h3>';
+                const apptHeading = currentUser.role === 'doctor' ? '👨‍⚕️ My Patient Appointments' : '🩺 Doctor Appointments';
+                html += `<h3 style="color: #667eea; margin: 25px 0 15px; font-size: 1.1em; border-top: ${currentUser.role === 'doctor' ? 'none' : '1px solid #eee'}; padding-top: ${currentUser.role === 'doctor' ? '0' : '20px'};">${apptHeading}</h3>`;
                 if (hasAppointments) {
                     html += appointmentsRes.appointments.map(appt => {
                         const statusColors = {
@@ -2366,12 +2963,15 @@
                 const data = await response.json();
 
                 if (data.success && data.doctors && data.doctors.length > 0) {
+                    const isDoctor = currentUser && currentUser.role === 'doctor';
                     grid.innerHTML = data.doctors.map(doc => {
                         const avatar = getDoctorAvatarInfo(doc.specialization);
                         const availDays = doc.available_days || 'Mon-Fri';
                         const availTime = doc.available_time || '9:00 AM - 5:00 PM';
                         const escapedName = (doc.name || '').replace(/'/g, "\\'");
                         const escapedSpec = (doc.specialization || '').replace(/'/g, "\\'");
+                        const escapedDeg = (doc.degree || '').replace(/'/g, "\\'");
+                        const bookBtn = isDoctor ? '' : '<button class="book-appt-btn" onclick="openApptModal(\'' + escapedName + '\', \'' + escapedSpec + '\', \'' + escapedDeg + '\')">Book Appointment</button>';
 
                         return `
                             <div class="doctor-card">
@@ -2383,7 +2983,7 @@
                                 <p class="doctor-experience">${doc.hospital || ''}</p>
                                 <span class="doctor-availability available">● ${availDays} | ${availTime}</span>
                                 <br><br>
-                                <button class="book-appt-btn" onclick="openApptModal('${escapedName}', '${escapedSpec}', '${doc.degree ? doc.degree.replace(/'/g, "\\'") : ''}')">Book Appointment</button>
+                                ${bookBtn}
                             </div>
                         `;
                     }).join('');

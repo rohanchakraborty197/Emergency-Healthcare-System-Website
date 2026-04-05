@@ -56,6 +56,18 @@ db.connect(err => {
         if (err) console.error("Error creating doctor_appointments table:", err.message);
         else console.log("✅ doctor_appointments table ready");
     });
+
+    // Auto-add password column to doctors table if missing
+    const addDoctorPassword = `
+        ALTER TABLE doctors ADD COLUMN password VARCHAR(255) DEFAULT NULL
+    `;
+    db.query(addDoctorPassword, (err) => {
+        if (err && !err.message.includes('Duplicate column')) {
+            console.error("Doctor password column:", err.message);
+        } else {
+            console.log("✅ doctors.password column ready");
+        }
+    });
 });
 
 // ✅ SIGNUP API (with password hashing)
@@ -275,6 +287,120 @@ app.post("/admin/login", async (req, res) => {
             }
         } else {
             res.json({ success: false, message: "Invalid admin credentials" });
+        }
+    });
+});
+
+// ✅ DOCTOR SIGNUP API
+app.post("/doctor/signup", async (req, res) => {
+    const { name, email, password, specialization, degree, hospital, phone, available_days, available_time } = req.body;
+
+    if (!name || !email || !password || !specialization) {
+        return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    try {
+        // Check if email already exists
+        db.query("SELECT id FROM doctors WHERE email = ?", [email], async (err, results) => {
+            if (err) {
+                console.error("Doctor signup check error:", err);
+                return res.status(500).json({ success: false, message: "Database error" });
+            }
+
+            if (results.length > 0) {
+                return res.status(400).json({ success: false, message: "Email already registered as a doctor" });
+            }
+
+            // Hash password
+            const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+            // Insert new doctor
+            const sql = `INSERT INTO doctors (name, email, password, specialization, degree, hospital, phone, available_days, available_time, rating) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 4.0)`;
+            const values = [name, email, hashedPassword, specialization, degree || '', hospital || '', phone || '', available_days || 'Mon-Fri', available_time || '9:00 AM - 5:00 PM'];
+
+            db.query(sql, values, (err, result) => {
+                if (err) {
+                    console.error("Doctor insert error:", err);
+                    return res.status(500).json({ success: false, message: "Failed to create doctor account" });
+                }
+                res.json({
+                    success: true,
+                    message: "Doctor registered successfully",
+                    doctorId: result.insertId
+                });
+            });
+        });
+    } catch (error) {
+        console.error("Doctor signup error:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
+
+// ✅ DOCTOR LOGIN API
+app.post("/doctor/login", async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.json({ success: false, message: "Email and password are required" });
+    }
+
+    const sql = "SELECT * FROM doctors WHERE email=?";
+    db.query(sql, [email], async (err, results) => {
+        if (err) {
+            console.error("Doctor login error:", err);
+            return res.json({ success: false, message: "Login failed" });
+        }
+
+        if (results.length > 0) {
+            const doctor = results[0];
+
+            // If doctor has no password set yet, allow first login with any password and set it
+            if (!doctor.password) {
+                try {
+                    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+                    db.query("UPDATE doctors SET password = ? WHERE id = ?", [hashedPassword, doctor.id]);
+                    console.log(`✅ Password set for doctor: ${doctor.name}`);
+                    return res.json({
+                        success: true,
+                        message: "Login successful (password set)",
+                        doctorId: doctor.id,
+                        doctorName: doctor.name,
+                        specialization: doctor.specialization
+                    });
+                } catch (error) {
+                    console.error("Doctor password set error:", error);
+                    return res.json({ success: false, message: "Login failed" });
+                }
+            }
+
+            try {
+                const isHashed = doctor.password.startsWith('$2b$') || doctor.password.startsWith('$2a$');
+                let match = false;
+
+                if (isHashed) {
+                    match = await bcrypt.compare(password, doctor.password);
+                } else {
+                    match = (password === doctor.password);
+                }
+
+                if (match) {
+                    res.json({
+                        success: true,
+                        message: "Doctor login successful",
+                        doctorId: doctor.id,
+                        doctorName: doctor.name,
+                        specialization: doctor.specialization
+                    });
+                } else {
+                    res.json({ success: false, message: "Invalid doctor credentials" });
+                }
+            } catch (error) {
+                console.error("Doctor compare error:", error);
+                res.json({ success: false, message: "Login failed" });
+            }
+        } else {
+            res.json({ success: false, message: "No doctor found with this email" });
         }
     });
 });
@@ -533,11 +659,23 @@ app.get("/user/appointments/:userId", (req, res) => {
         res.json({ success: true, appointments: results });
     });
 });
+// ✅ DOCTOR: GET MY APPOINTMENTS
+app.get("/doctor/appointments/:doctorName", (req, res) => {
+    const { doctorName } = req.params;
+    const sql = "SELECT * FROM doctor_appointments WHERE doctor_name = ? ORDER BY created_at DESC";
+    db.query(sql, [doctorName], (err, results) => {
+        if (err) {
+            console.error("Fetch doctor appointments error:", err);
+            return res.json({ success: false, message: "Failed to fetch appointments" });
+        }
+        res.json({ success: true, appointments: results });
+    });
+});
 
 
 // ✅ GET ALL DOCTORS
 app.get("/doctors", (req, res) => {
-    const sql = "SELECT * FROM doctors ORDER BY rating DESC";
+    const sql = "SELECT * FROM doctors ORDER BY id DESC";
     db.query(sql, (err, results) => {
         if (err) {
             console.error("Fetch doctors error:", err);
@@ -609,7 +747,7 @@ const specialistMap = {
 };
 
 app.post("/chat", async (req, res) => {
-    const { message } = req.body;
+    const { message, accumulatedSymptoms } = req.body;
 
     if (!message) {
         return res.json({ success: false, reply: "I didn't catch that. Could you please repeat?" });
@@ -620,7 +758,7 @@ app.post("/chat", async (req, res) => {
     let action = null;
     let richData = null;
 
-    // 🚨 1. EMERGENCY DETECTION (Highest Priority)
+    //  1. EMERGENCY DETECTION (Highest Priority)
     const emergencyPatterns = [
         'heart attack', 'stroke', 'unconscious', 'not breathing',
         'severe bleeding', 'accident', 'trauma', 'seizure', 'collapsed',
@@ -634,9 +772,9 @@ app.post("/chat", async (req, res) => {
         return res.json({ success: true, reply, action, richData: null });
     }
 
-    // 👋 2. GREETINGS & CONVERSATIONAL
+    //  2. GREETINGS & CONVERSATIONAL
     if (/^(hi|hello|hey|hola|namaste|good morning|good evening|good afternoon)\b/.test(lowerMsg)) {
-        reply = "Hello! 👋 I'm your AI Health Assistant powered by custom ML. Tell me your symptoms, and I'll analyze them to suggest a possible diagnosis.";
+        reply = "Hello! 👋 I'm your AI Health Assistant. Here's what I can do:\n\n🔬 **Diagnose symptoms** — Tell me what you're feeling\n📚 **Medical info** — Ask about any disease\n🏥 **Platform guide** — Ask how to book doctors, ambulances, etc.\n\nHow can I help you today?";
         return res.json({ success: true, reply, action: null, richData: null });
     }
     if (/^(thank|thanks|thx|ty|appreciate)/.test(lowerMsg)) {
@@ -647,22 +785,51 @@ app.post("/chat", async (req, res) => {
         reply = "Take care! 🌟 Don't hesitate to come back if you need health guidance.";
         return res.json({ success: true, reply, action: null, richData: null });
     }
-    if (/^(what can you do|help|how do you work|what are you)/.test(lowerMsg)) {
-        reply = "I'm an AI Health Assistant trained on 41 diseases with 132 symptoms. 🧠\n\nJust describe your symptoms (e.g., \"I have a headache, fever, and nausea\") and I'll analyze them using our custom ML model to suggest a possible diagnosis, severity level, and recommended precautions.";
-        return res.json({ success: true, reply, action: null, richData: null });
-    }
 
-    // 🤖 3. ML MODEL ANALYSIS (NLP + Prediction)
+    // 3. ML MODEL ANALYSIS (NLP + FAQ + Follow-ups + Prediction)
     try {
         const mlRes = await fetch("http://localhost:5000/analyze", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: message })
+            body: JSON.stringify({ 
+                text: message,
+                accumulated_symptoms: accumulatedSymptoms || []
+            })
         });
 
         const data = await mlRes.json();
 
-        if (data.success && data.disease) {
+        // ── FAQ / Platform Guidance Response ──
+        if (data.success && data.type === 'faq') {
+            reply = data.answer;
+            return res.json({ success: true, reply, action: null, richData: null });
+        }
+
+        // ── Follow-up Questions (not enough symptoms yet) ──
+        if (data.success && data.type === 'followup') {
+            const matchedNames = (data.matched_symptoms || []).map(s => s.replace(/_/g, ' '));
+            reply = `I noticed you mentioned: **${matchedNames.join(', ')}**\n\n`;
+            reply += "To give you an accurate diagnosis, I need a bit more information:\n\n";
+            
+            const followups = data.followup_questions || [];
+            followups.forEach((q, i) => {
+                reply += `${i + 1}. ${q}\n`;
+            });
+            
+            reply += "\nPlease describe any additional symptoms you're experiencing.";
+
+            return res.json({ 
+                success: true, 
+                reply, 
+                action: null, 
+                richData: null,
+                accumulatedSymptoms: data.matched_symptoms || [],
+                needsMoreInfo: true
+            });
+        }
+
+        // ── Full Diagnosis Response ──
+        if (data.success && data.type === 'diagnosis' && data.disease) {
             const disease = data.disease;
             const confidence = (data.confidence * 100).toFixed(1);
             const severity = data.severity || 'unknown';
@@ -696,6 +863,28 @@ app.post("/chat", async (req, res) => {
 
             reply += `👨‍⚕️ Recommended: **${specialist}**`;
 
+            // Query database for available doctors matching the specialist
+            const doctorQuery = new Promise((resolve) => {
+                const sql = "SELECT id, name, specialization, degree, hospital, rating, available_days, available_time FROM doctors WHERE specialization LIKE ? ORDER BY rating DESC LIMIT 3";
+                db.query(sql, [`%${specialist}%`], (err, results) => {
+                    if (err || !results || results.length === 0) {
+                        resolve([]);
+                    } else {
+                        resolve(results);
+                    }
+                });
+            });
+
+            const availableDoctors = await doctorQuery;
+
+            if (availableDoctors.length > 0) {
+                reply += `\n\n🏥 **Available Doctors:**\n`;
+                availableDoctors.forEach(doc => {
+                    reply += `• **${doc.name}** (${doc.degree || specialist}) — ${doc.hospital || 'TrackNHeal'} ⭐${doc.rating}\n`;
+                });
+                reply += `\nYou can book an appointment from the Doctor section below!`;
+            }
+
             // Build richData for enhanced frontend rendering
             richData = {
                 disease,
@@ -705,6 +894,19 @@ app.post("/chat", async (req, res) => {
                 precautions,
                 specialist,
                 matchedSymptoms,
+                medications: data.medications || [],
+                diets: data.diets || [],
+                workouts: data.workouts || [],
+                availableDoctors: availableDoctors.map(doc => ({
+                    id: doc.id,
+                    name: doc.name,
+                    specialization: doc.specialization,
+                    degree: doc.degree,
+                    hospital: doc.hospital,
+                    rating: doc.rating,
+                    available_days: doc.available_days,
+                    available_time: doc.available_time
+                })),
                 top3: top3.map(t => ({
                     disease: t.disease,
                     confidence: (t.confidence * 100).toFixed(1),
@@ -719,26 +921,25 @@ app.post("/chat", async (req, res) => {
                 action = "doctor";
             }
 
-            return res.json({ success: true, reply, action, richData });
+            return res.json({ success: true, reply, action, richData, accumulatedSymptoms: [] });
         }
 
         // ML returned no symptoms found
         if (data.error === 'no_symptoms_found') {
-            reply = "I couldn't identify specific medical symptoms from your message. 🤔\n\nTry describing your symptoms more specifically, for example:\n• \"I have a headache and fever\"\n• \"I feel dizzy and nauseous\"\n• \"I have skin rash and itching\"";
+            reply = "I couldn't identify specific medical symptoms from your message. 🤔\n\nHere are some things you can try:\n• **Describe symptoms**: \"I have a headache, fever, and nausea\"\n• **Ask about a disease**: \"What is diabetes?\"\n• **Platform help**: \"How to book a doctor?\" or \"How to book an ambulance?\"\n• **General info**: \"What services do you offer?\"";
             return res.json({ success: true, reply, action: null, richData: null });
         }
 
     } catch (err) {
         console.error("ML Server Error:", err.message);
-        // Fall through to fallback
     }
 
-    // ⚠️ 4. FALLBACK (when ML server is unreachable)
-    reply = "I'm having trouble connecting to the diagnosis engine right now. 😔\n\nPlease try again in a moment, or describe your symptoms differently.";
+    // 4. FALLBACK
+    reply = "I'm having trouble connecting to the diagnosis engine right now. 😔\n\nIn the meantime, you can:\n• **Book an ambulance** using the button on the homepage\n• **Browse doctors** in the Doctor Appointment section\n• Try describing your symptoms again in a moment";
     res.json({ success: true, reply, action: null, richData: null });
 });
 
-// ✅ Start server
+// Start server
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {

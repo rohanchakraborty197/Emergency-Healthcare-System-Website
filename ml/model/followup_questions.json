@@ -1,0 +1,89 @@
+{
+  "min_symptoms_for_diagnosis": 3,
+  "generic_followups": [
+    "Do you also have **fever** or **chills**?",
+    "Are you experiencing any **pain**? If so, where?",
+    "How long have you had these symptoms?",
+    "Do you have **nausea** or **vomiting**?",
+    "Any **skin changes** like rash, itching, or discoloration?"
+  ],
+  "symptom_followups": {
+    "headache": [
+      "Is the headache on one side or both sides?",
+      "Do you also have **fever**, **nausea**, or **sensitivity to light**?",
+      "Have you experienced any **dizziness** or **blurred vision**?"
+    ],
+    "high_fever": [
+      "How high is your temperature? Do you have **chills** or **sweating**?",
+      "Any **body pain**, **joint pain**, or **muscle aches**?",
+      "Do you have a **cough**, **sore throat**, or **runny nose**?",
+      "Any **skin rash** or **red spots on the body**?"
+    ],
+    "mild_fever": [
+      "Do you also have a **cough** or **cold**?",
+      "Any **body aches** or **fatigue**?",
+      "How many days have you had the fever?"
+    ],
+    "cough": [
+      "Is it a **dry cough** or do you have **phlegm/mucus**?",
+      "Do you have **fever** or **breathlessness**?",
+      "Any **chest pain** or **throat irritation**?"
+    ],
+    "skin_rash": [
+      "Is the rash **itchy**? Does it have **pus-filled bumps**?",
+      "Where on your body is the rash?",
+      "Do you also have **fever** or **joint pain**?"
+    ],
+    "itching": [
+      "Where is the itching? Is there a visible **rash**?",
+      "Any **skin peeling** or **discoloration**?",
+      "Do you have **redness** or **nodal skin eruptions**?"
+    ],
+    "stomach_pain": [
+      "Is the pain **sharp** or **dull/cramping**?",
+      "Do you have **nausea**, **vomiting**, or **diarrhea**?",
+      "Any **bloating**, **acidity**, or **loss of appetite**?"
+    ],
+    "vomiting": [
+      "Is there any **blood in the vomit**?",
+      "Do you also have **stomach pain** or **diarrhea**?",
+      "Any **fever** or **headache** along with it?"
+    ],
+    "fatigue": [
+      "How long have you been feeling tired?",
+      "Do you also have **weight loss** or **loss of appetite**?",
+      "Any **fever**, **muscle weakness**, or **dizziness**?"
+    ],
+    "joint_pain": [
+      "Which joints are affected? Is there **swelling**?",
+      "Do you have **stiffness** especially in the morning?",
+      "Any **fever**, **skin rash**, or **muscle pain**?"
+    ],
+    "breathlessness": [
+      "Is it constant or does it come and go?",
+      "Do you have a **cough**, **chest pain**, or **wheezing**?",
+      "Any **swelling in legs** or **fast heartbeat**?"
+    ],
+    "chest_pain": [
+      "Is the pain **sharp** or **tightening/pressure**?",
+      "Do you have **breathlessness** or **sweating**?",
+      "Does the pain radiate to your **arm**, **jaw**, or **back**?",
+      "🚨 If chest pain is severe, please seek emergency care immediately!"
+    ],
+    "diarrhoea": [
+      "How frequent are the loose stools?",
+      "Is there any **blood in stool**?",
+      "Do you have **fever**, **nausea**, or **stomach cramps**?"
+    ],
+    "burning_micturition": [
+      "Do you have **frequent urge to urinate**?",
+      "Any **dark urine** or **foul-smelling urine**?",
+      "Do you have **fever** or **lower abdominal pain**?"
+    ],
+    "yellowish_skin": [
+      "Are your **eyes also yellow**?",
+      "Do you have **dark urine** or **pale stools**?",
+      "Any **nausea**, **fatigue**, or **abdominal pain**?"
+    ]
+  }
+}
