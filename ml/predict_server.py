@@ -378,7 +378,36 @@ def analyze():
     # Check for accumulated symptoms from previous conversation turns
     accumulated = data.get('accumulated_symptoms', [])
 
-    # Step 0: Check if this is a FAQ / platform question
+    # Step 0: Check if they named a disease directly (to provide the rich UI instead of FAQ)
+    text_lower = text.lower()
+    direct_disease = None
+    for d in label_encoder.classes_:
+        # Handle the vertigo special case name
+        search_d = 'vertigo' if 'vertigo' in d.lower() else d
+        pattern = r'\b' + re.escape(search_d.lower()) + r'\b'
+        if re.search(pattern, text_lower):
+            direct_disease = d
+            break
+            
+    if direct_disease:
+        info = disease_info.get(direct_disease, {})
+        return jsonify({
+            'success': True,
+            'type': 'diagnosis',
+            'disease': direct_disease,
+            'confidence': 1.0,
+            'description': info.get('description', ''),
+            'precautions': info.get('precautions', []),
+            'severity': info.get('severity', 'unknown'),
+            'medications': info.get('medications', []),
+            'diets': info.get('diets', []),
+            'workouts': info.get('workouts', []),
+            'top_3': [],
+            'matched_symptoms': [f"Directly identified: {direct_disease}"],
+            'match_details': []
+        })
+
+    # Step 0.5: Check if this is a FAQ / platform question
     faq_answer, faq_type = match_faq(text)
     if faq_answer:
         return jsonify({

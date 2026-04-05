@@ -1,73 +1,203 @@
 {
   "medical_knowledge": {
     "diabetes": {
-      "question_patterns": ["what is diabetes", "tell me about diabetes", "explain diabetes", "diabetes information", "diabetes details"],
+      "question_patterns": [
+        "what is diabetes",
+        "tell me about diabetes",
+        "explain diabetes",
+        "diabetes information",
+        "diabetes details"
+      ],
       "answer": "**Diabetes** is a chronic metabolic disease characterized by elevated blood sugar levels. There are two main types:\n\n• **Type 1**: The body doesn't produce insulin (autoimmune)\n• **Type 2**: The body doesn't use insulin properly (lifestyle-related)\n\n**Common Symptoms**: Excessive thirst, frequent urination, unexplained weight loss, fatigue, blurred vision\n\n**Prevention**: Regular exercise, balanced diet, maintain healthy weight, regular checkups\n\n👨‍⚕️ Recommended Specialist: **Endocrinologist**"
     },
     "hypertension": {
-      "question_patterns": ["what is hypertension", "high blood pressure", "tell me about hypertension", "explain blood pressure", "bp problem"],
+      "question_patterns": [
+        "what is hypertension",
+        "high blood pressure",
+        "tell me about hypertension",
+        "explain blood pressure",
+        "bp problem"
+      ],
       "answer": "**Hypertension (High Blood Pressure)** is when blood pressure against artery walls is consistently too high.\n\n• **Normal BP**: Below 120/80 mmHg\n• **Elevated**: 120-129/<80 mmHg\n• **High (Stage 1)**: 130-139/80-89 mmHg\n• **High (Stage 2)**: 140+/90+ mmHg\n\n**Risk Factors**: Obesity, high salt intake, stress, lack of exercise, family history\n\n**Prevention**: Low-sodium diet, regular exercise, limit alcohol, manage stress\n\n👨‍⚕️ Recommended Specialist: **Cardiologist**"
     },
     "malaria": {
-      "question_patterns": ["what is malaria", "tell me about malaria", "malaria information", "explain malaria"],
+      "question_patterns": [
+        "what is malaria",
+        "tell me about malaria",
+        "malaria information",
+        "explain malaria"
+      ],
       "answer": "**Malaria** is a life-threatening disease caused by Plasmodium parasites, transmitted through infected mosquito bites.\n\n**Common Symptoms**: High fever, chills, headache, nausea, muscle pain, sweating\n\n**Prevention**: Use mosquito nets, insect repellent, wear long sleeves, eliminate standing water\n\n**Treatment**: Anti-malarial medications (prescribed by doctor)\n\n👨‍⚕️ Recommended Specialist: **General Physician / Infectious Disease Specialist**"
     },
     "dengue": {
-      "question_patterns": ["what is dengue", "tell me about dengue", "dengue fever", "dengue information"],
+      "question_patterns": [
+        "what is dengue",
+        "tell me about dengue",
+        "dengue fever",
+        "dengue information"
+      ],
       "answer": "**Dengue Fever** is a mosquito-borne viral infection common in tropical regions.\n\n**Common Symptoms**: High fever, severe headache, pain behind eyes, joint/muscle pain, rash, nausea\n\n**Warning Signs (Seek Emergency Care)**: Severe abdominal pain, persistent vomiting, bleeding gums, fatigue\n\n**Prevention**: Avoid mosquito bites, use repellent, wear protective clothing, drain stagnant water\n\n👨‍⚕️ Recommended Specialist: **General Physician**"
     },
     "tuberculosis": {
-      "question_patterns": ["what is tuberculosis", "what is tb", "tell me about tb", "tuberculosis information"],
+      "question_patterns": [
+        "what is tuberculosis",
+        "what is tb",
+        "tell me about tb",
+        "tuberculosis information"
+      ],
       "answer": "**Tuberculosis (TB)** is a bacterial infection that primarily affects the lungs, caused by Mycobacterium tuberculosis.\n\n**Common Symptoms**: Persistent cough (3+ weeks), blood in sputum, chest pain, weight loss, night sweats, fever\n\n**How It Spreads**: Through airborne droplets when infected person coughs/sneezes\n\n**Prevention**: BCG vaccination, good ventilation, avoid close contact with TB patients\n\n👨‍⚕️ Recommended Specialist: **Pulmonologist**"
     },
     "common_cold": {
-      "question_patterns": ["what is common cold", "cold symptoms", "tell me about cold", "how to treat cold"],
+      "question_patterns": [
+        "what is common cold",
+        "cold symptoms",
+        "tell me about cold",
+        "how to treat cold"
+      ],
       "answer": "**Common Cold** is a viral infection of the upper respiratory tract.\n\n**Common Symptoms**: Runny nose, sneezing, sore throat, mild cough, low-grade fever\n\n**Treatment**: Rest, fluids, over-the-counter decongestants, warm liquids\n\n**When to See a Doctor**: Symptoms lasting >10 days, high fever, difficulty breathing\n\n👨‍⚕️ Recommended: **General Physician** (if symptoms persist)"
     },
     "migraine": {
-      "question_patterns": ["what is migraine", "tell me about migraine", "migraine causes", "migraine treatment"],
+      "question_patterns": [
+        "what is migraine",
+        "tell me about migraine",
+        "migraine causes",
+        "migraine treatment"
+      ],
       "answer": "**Migraine** is a neurological condition causing intense, throbbing headaches, often on one side of the head.\n\n**Common Symptoms**: Severe headache, nausea, sensitivity to light/sound, visual disturbances (aura)\n\n**Triggers**: Stress, certain foods, hormonal changes, lack of sleep, bright lights\n\n**Management**: Pain relievers, trigger avoidance, regular sleep, stress management\n\n👨‍⚕️ Recommended Specialist: **Neurologist**"
     },
     "pneumonia": {
-      "question_patterns": ["what is pneumonia", "tell me about pneumonia", "pneumonia symptoms", "lung infection"],
+      "question_patterns": [
+        "what is pneumonia",
+        "tell me about pneumonia",
+        "pneumonia symptoms",
+        "lung infection"
+      ],
       "answer": "**Pneumonia** is an infection that inflames air sacs in one or both lungs, which may fill with fluid.\n\n**Common Symptoms**: Cough with phlegm, fever, chills, difficulty breathing, chest pain\n\n**Risk Factors**: Age (very young/old), weakened immune system, smoking, chronic diseases\n\n**Prevention**: Vaccination, hand hygiene, not smoking, healthy lifestyle\n\n👨‍⚕️ Recommended Specialist: **Pulmonologist**"
     },
     "asthma": {
-      "question_patterns": ["what is asthma", "tell me about asthma", "asthma treatment", "breathing problem"],
+      "question_patterns": [
+        "what is asthma",
+        "tell me about asthma",
+        "asthma treatment",
+        "breathing problem"
+      ],
       "answer": "**Bronchial Asthma** is a chronic condition where airways narrow, swell, and produce extra mucus.\n\n**Common Symptoms**: Wheezing, shortness of breath, chest tightness, coughing (especially at night)\n\n**Triggers**: Allergens (dust, pollen), cold air, exercise, smoke, stress\n\n**Management**: Inhalers (rescue & maintenance), avoiding triggers, action plan with doctor\n\n👨‍⚕️ Recommended Specialist: **Pulmonologist**"
     },
     "jaundice": {
-      "question_patterns": ["what is jaundice", "tell me about jaundice", "yellow skin", "jaundice treatment"],
+      "question_patterns": [
+        "what is jaundice",
+        "tell me about jaundice",
+        "yellow skin",
+        "jaundice treatment"
+      ],
       "answer": "**Jaundice** is a condition where skin and eyes turn yellow due to high bilirubin levels in the blood.\n\n**Common Symptoms**: Yellow skin/eyes, dark urine, pale stools, itching, fatigue\n\n**Causes**: Liver disease, bile duct blockage, hemolytic anemia, hepatitis\n\n**Treatment**: Treat underlying cause, rest, proper hydration, dietary changes\n\n👨‍⚕️ Recommended Specialist: **Gastroenterologist / Hepatologist**"
+    },
+    "aids": {
+      "question_patterns": [
+        "what is aids",
+        "what is hiv",
+        "tell me about aids",
+        "aids information",
+        "aids disease",
+        "hiv disease",
+        "about aids",
+        "i have aids",
+        "got aids",
+        "i have hiv"
+      ],
+      "answer": "**AIDS (Acquired Immunodeficiency Syndrome)** is a chronic, potentially life-threatening condition caused by the human immunodeficiency virus (HIV).\n\n**Common Symptoms**: Muscle wasting, weight loss, high fever, patches in throat, extreme fatigue\n\n**How It Spreads**: Through contact with certain bodily fluids, unprotected sex, sharing needles, or from mother to child\n\n**Treatment**: Antiretroviral therapy (ART) to manage the virus\n\n👨‍⚕️ Recommended Specialist: **General Physician / Infectious Disease Specialist**"
     }
   },
   "platform_guidance": {
     "book_doctor": {
-      "question_patterns": ["how to book doctor", "book a doctor", "doctor appointment", "how to book appointment", "schedule appointment", "see a doctor", "consult doctor", "find doctor", "doctor booking", "how do i book", "appointment booking", "book consultation"],
+      "question_patterns": [
+        "how to book doctor",
+        "book a doctor",
+        "doctor appointment",
+        "how to book appointment",
+        "schedule appointment",
+        "see a doctor",
+        "consult doctor",
+        "find doctor",
+        "doctor booking",
+        "how do i book",
+        "appointment booking",
+        "book consultation"
+      ],
       "answer": "Here's how to **book a doctor appointment** on TrackNHeal:\n\n1️⃣ Scroll down to the **🩺 Doctor Appointment** section on the homepage\n2️⃣ Browse through our available doctors with their specializations, ratings, and availability\n3️⃣ Click **\"Book Appointment\"** on the doctor you'd like to consult\n4️⃣ Fill in your details — name, phone, email, preferred date & time\n5️⃣ Click **\"Confirm Appointment\"** and you're done! ✅\n\n💡 **Tip**: You can also tell me your symptoms and I'll recommend the right specialist!"
     },
     "book_ambulance": {
-      "question_patterns": ["how to book ambulance", "book ambulance", "call ambulance", "emergency ambulance", "need ambulance", "ambulance booking", "ambulance service", "how to call ambulance"],
+      "question_patterns": [
+        "how to book ambulance",
+        "book ambulance",
+        "call ambulance",
+        "emergency ambulance",
+        "need ambulance",
+        "ambulance booking",
+        "ambulance service",
+        "how to call ambulance"
+      ],
       "answer": "Here's how to **book an ambulance** on TrackNHeal:\n\n1️⃣ Click **\"Book Ambulance Now 🚑\"** on the homepage hero section\n2️⃣ Enter patient name, phone number, pickup & drop location\n3️⃣ Select the emergency type\n4️⃣ Add any additional notes for paramedics\n5️⃣ Click **\"Submit Booking\"** — an ambulance will be dispatched!\n\n🚨 **For life-threatening emergencies**, please also call **123-456-7890** directly!"
     },
     "check_bookings": {
-      "question_patterns": ["my bookings", "check bookings", "booking history", "see my appointments", "view appointments", "booking status", "check appointment", "my appointments"],
+      "question_patterns": [
+        "my bookings",
+        "check bookings",
+        "booking history",
+        "see my appointments",
+        "view appointments",
+        "booking status",
+        "check appointment",
+        "my appointments"
+      ],
       "answer": "To **check your bookings and appointments**:\n\n1️⃣ Make sure you're logged in (click **Login** at the top right)\n2️⃣ After login, click **\"📋 My Bookings\"** button in the top navigation bar\n3️⃣ You'll see all your **ambulance bookings** and **doctor appointments** with their status\n\n💡 You can cancel pending bookings from the same screen!"
     },
     "login_signup": {
-      "question_patterns": ["how to login", "how to sign up", "create account", "register", "how to register", "login help", "signup help", "make account"],
+      "question_patterns": [
+        "how to login",
+        "how to sign up",
+        "create account",
+        "register",
+        "how to register",
+        "login help",
+        "signup help",
+        "make account"
+      ],
       "answer": "To **create an account or login** on TrackNHeal:\n\n1️⃣ Click the **\"Login\"** button at the top right corner\n2️⃣ Choose your role: **User**, **Admin**, or **Doctor**\n3️⃣ For new users: Click **\"Sign Up Here\"** and fill in your name, email & password\n4️⃣ For existing users: Enter your email & password and click **\"Login\"**\n\n✅ Once logged in, you can book ambulances, schedule doctor appointments, and view your history!"
     },
     "chatbot_help": {
-      "question_patterns": ["what can you do", "help me", "how to use", "how does this work", "chatbot help", "what do you do", "your features", "capabilities"],
+      "question_patterns": [
+        "what can you do",
+        "help me",
+        "how to use",
+        "how does this work",
+        "chatbot help",
+        "what do you do",
+        "your features",
+        "capabilities"
+      ],
       "answer": "I'm your **AI Health Assistant** on TrackNHeal! Here's what I can do:\n\n🔬 **Diagnose Symptoms** — Tell me what you're feeling and I'll analyze it with our ML model trained on 41 diseases\n📚 **Medical Knowledge** — Ask me about any disease (e.g., \"What is diabetes?\")\n🏥 **Platform Guide** — I can help you navigate TrackNHeal (booking doctors, ambulances, etc.)\n🚨 **Emergency Detection** — I detect emergencies and suggest immediate ambulance booking\n\n💡 **Try saying**: \"I have a headache and fever\" or \"How to book a doctor?\""
     },
     "contact_support": {
-      "question_patterns": ["contact", "support", "customer support", "help desk", "phone number", "email support", "reach you"],
+      "question_patterns": [
+        "contact",
+        "support",
+        "customer support",
+        "help desk",
+        "phone number",
+        "email support",
+        "reach you"
+      ],
       "answer": "You can reach **TrackNHeal** through:\n\n📱 **Emergency Hotline**: 123-456-7890 (24/7)\n📧 **Email**: help@tracknheal.com\n📍 **Address**: 123 Medical Lane, Health City\n\nFor non-urgent queries, feel free to ask me right here in the chat! 😊"
     },
     "services": {
-      "question_patterns": ["what services", "your services", "what do you offer", "features", "services available"],
+      "question_patterns": [
+        "what services",
+        "your services",
+        "what do you offer",
+        "features",
+        "services available"
+      ],
       "answer": "**TrackNHeal** offers these services:\n\n🚨 **Emergency Ambulance Booking** — 24/7 rapid dispatch with trained paramedics\n🏥 **Hospital Transfer** — Safe inter-hospital patient transfers\n👶 **Maternity Care** — Specialized ambulances for pregnancy emergencies\n💊 **Medical Equipment** — Fully equipped with advanced life support\n🩺 **Doctor Appointments** — Book consultations with top specialists\n🤖 **AI Health Assistant** — ML-powered symptom diagnosis (that's me!)\n\nScroll down on the homepage to explore each service!"
     }
   }

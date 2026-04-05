@@ -26,11 +26,11 @@
 
 &#x09;	**cd ml**
 
-&#x09;	**python ml/predict\_server.py**
+&#x09;	**python ml/predict_server.py**
 
 
 
-&#x09;b. Start backend server(Terminal 2:
+&#x09;b. Start backend server(Terminal 2):
 
 
 
