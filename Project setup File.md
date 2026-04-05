@@ -1,5 +1,3 @@
-
-
 1\. Install required packages:
 
 &#x09;
@@ -25,6 +23,8 @@
 &#x20;	a. Start ML backend server for chatbot(Terminal 1):
 
 
+
+&#x09;	**cd ml**
 
 &#x09;	**python ml/predict\_server.py**
 
