@@ -7,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="../css/admin.css">
 </head>
 
@@ -69,7 +71,6 @@
             </div>
         </header>
 
-        <!-- Nav Tabs -->
         <nav class="nav-tabs">
             <button class="nav-tab active" id="tabBookings" onclick="switchTab('bookings')">📋 Bookings <span
                     class="tab-count" id="tabBookingsCount">-</span></button>
@@ -79,9 +80,40 @@
                     id="tabDoctorsCount">-</span></button>
             <button class="nav-tab" id="tabAppointments" onclick="switchTab('appointments')">📅 Appointments <span
                     class="tab-count" id="tabAppointmentsCount">-</span></button>
+            <button class="nav-tab" id="tabFleet" onclick="switchTab('fleet')">🗺️ Fleet & Drivers <span class="tab-count"
+                    id="tabFleetCount">-</span></button>
         </nav>
 
         <main class="main-content">
+            <!-- ==================== FLEET VIEW ==================== -->
+            <div class="section-view" id="fleetView">
+                <div class="section-header">
+                    <h2>🚑 Driver Management</h2>
+                    <div>
+                        <a href="/ambulance.html" target="_blank" class="refresh-btn" style="text-decoration: none; display: inline-block; margin-right: 10px;">🚑 Open Ambulance Dashboard</a>
+                        <button class="refresh-btn" onclick="loadFleet()">🔄 Refresh</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Driver ID</th>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Rating</th>
+                                <th>Earnings</th>
+                                <th>Total Trips</th>
+                                <th>Vehicle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fleetTable">
+                            <tr><td colspan="7" class="loading-text">Loading fleet data</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- ==================== BOOKINGS VIEW ==================== -->
             <div class="section-view active" id="bookingsView">
                 <!-- Stats Cards -->
@@ -411,6 +443,7 @@
             loadUsers();
             loadDoctors();
             loadAppointments();
+            loadFleet();
         }
 
         function showError(message) {
@@ -714,10 +747,17 @@
             document.getElementById('tabUsers').classList.toggle('active', tab === 'users');
             document.getElementById('tabDoctors').classList.toggle('active', tab === 'doctors');
             document.getElementById('tabAppointments').classList.toggle('active', tab === 'appointments');
+            document.getElementById('tabFleet').classList.toggle('active', tab === 'fleet');
+            
             document.getElementById('bookingsView').classList.toggle('active', tab === 'bookings');
             document.getElementById('usersView').classList.toggle('active', tab === 'users');
             document.getElementById('doctorsView').classList.toggle('active', tab === 'doctors');
             document.getElementById('appointmentsView').classList.toggle('active', tab === 'appointments');
+            document.getElementById('fleetView').classList.toggle('active', tab === 'fleet');
+
+            if (tab === 'fleet') {
+                loadFleet();
+            }
 
             if (tab === 'users' && allUsers.length === 0) {
                 loadUsers();
@@ -1126,6 +1166,37 @@
                 }
             } catch (error) {
                 alert('Error updating appointment status');
+            }
+        }
+
+        // ============================================
+        // FLEET MANAGEMENT
+        // ============================================
+        
+        async function loadFleet() {
+            const tbody = document.getElementById('fleetTable');
+            try {
+                const res = await fetch('/admin/fleet/drivers');
+                const data = await res.json();
+                if(data.success && data.drivers.length > 0) {
+                    document.getElementById('tabFleetCount').textContent = data.drivers.length;
+                    tbody.innerHTML = data.drivers.map(d => `
+                        <tr>
+                            <td class="booking-id">#${d.id}</td>
+                            <td><strong>${escapeHtml(d.name)}</strong></td>
+                            <td><span class="status-badge ${d.status}">${d.status}</span></td>
+                            <td>⭐ ${(d.rating || 5).toFixed(1)}</td>
+                            <td style="color:#27ae60; font-weight:600;">₹${d.total_earnings || 0}</td>
+                            <td>${d.total_trips || 0}</td>
+                            <td>${d.vehicle_id ? `🚑 ${d.vehicle_id}` : '<span style="color:#999">Unassigned</span>'}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    document.getElementById('tabFleetCount').textContent = '0';
+                    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No drivers found</td></tr>';
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Error loading fleet</td></tr>';
             }
         }
 

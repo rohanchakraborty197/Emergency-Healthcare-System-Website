@@ -363,3 +363,35 @@ CREATE TABLE IF NOT EXISTS ambulance_drivers (
 ----- Add assignment columns to bookings (run if not present) -----
 ALTER TABLE bookings ADD COLUMN assigned_ambulance_id INT DEFAULT NULL;
 ALTER TABLE bookings ADD COLUMN assigned_driver_id INT DEFAULT NULL;
+ALTER TABLE bookings ADD COLUMN fare DECIMAL(10,2) DEFAULT 0.00;
+ALTER TABLE bookings ADD COLUMN driver_rating INT DEFAULT NULL;
+
+----- Update bookings status ENUM to include all valid states -----
+ALTER TABLE bookings MODIFY COLUMN status ENUM(
+    'pending',
+    'dispatched',
+    'completed',
+    'cancelled'
+) DEFAULT 'pending';
+
+----- Add driver info columns to ambulances (run if not present) -----
+ALTER TABLE ambulances ADD COLUMN driver_name VARCHAR(255) DEFAULT NULL;
+ALTER TABLE ambulances ADD COLUMN driver_phone VARCHAR(20) DEFAULT NULL;
+
+----- Add analytics columns to ambulance_drivers (run if not present) -----
+ALTER TABLE ambulance_drivers ADD COLUMN rating FLOAT DEFAULT 5.0;
+ALTER TABLE ambulance_drivers ADD COLUMN total_ratings INT DEFAULT 0;
+ALTER TABLE ambulance_drivers ADD COLUMN total_trips INT DEFAULT 0;
+ALTER TABLE ambulance_drivers ADD COLUMN total_earnings DECIMAL(10,2) DEFAULT 0.00;
+
+----- Add doctor_id FK constraint to doctor_appointments (run if not present) -----
+ALTER TABLE doctor_appointments ADD CONSTRAINT fk_doc_id FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE SET NULL;
+
+----- Update ambulance_tracking status ENUM to include all valid states -----
+ALTER TABLE ambulance_tracking MODIFY COLUMN status ENUM(
+    'dispatched',
+    'en_route',
+    'arrived',
+    'dropping',
+    'completed'
+) DEFAULT 'dispatched';

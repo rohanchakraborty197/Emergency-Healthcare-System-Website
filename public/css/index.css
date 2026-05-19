@@ -1806,4 +1806,169 @@ section h2 {
     border: 1px solid #ccc;
     width: auto;
     padding: 12px 25px;
-}
+}
+
+/* ============================================ */
+/* IMPROVED CHATBOT STYLES                      */
+/* ============================================ */
+
+/* --- Chat Header Controls --- */
+.chat-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chat-clear-btn {
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.35);
+    color: white;
+    font-size: 0.72em;
+    padding: 4px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.chat-clear-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.chat-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.15em;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 4px;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+}
+.chat-close-btn:hover { opacity: 1; }
+
+/* --- Message Row (wraps avatar + bubble) --- */
+.chat-message-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    animation: chatFadeIn 0.3s ease;
+    flex-shrink: 0;
+}
+.chat-message-row.user-row {
+    flex-direction: row-reverse;
+}
+.chat-message-row.bot-row {
+    flex-direction: row;
+}
+
+/* --- Bot Avatar --- */
+.chat-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(102,126,234,0.3);
+}
+
+/* --- Message bubble with timestamp --- */
+.chat-bubble-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-width: 82%;
+}
+.chat-message-row.user-row .chat-bubble-wrap {
+    align-items: flex-end;
+}
+.chat-message-row.bot-row .chat-bubble-wrap {
+    align-items: flex-start;
+}
+
+.chat-timestamp {
+    font-size: 0.64em;
+    color: #b0b0b0;
+    padding: 0 4px;
+}
+
+/* Override old standalone .chat-message for new row-based layout */
+.chat-message-row .chat-message {
+    animation: none; /* animation is on the row */
+    flex-shrink: unset;
+    max-width: 100%;
+    margin: 0;
+}
+
+/* --- Animated Typing Indicator --- */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 14px;
+    background: white;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    border-bottom-left-radius: 3px;
+    width: fit-content;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.typing-dot {
+    width: 7px;
+    height: 7px;
+    background: #667eea;
+    border-radius: 50%;
+    animation: typingBounce 1.2s infinite ease-in-out;
+}
+.typing-dot:nth-child(1) { animation-delay: 0s; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* --- Quick Reply Chips --- */
+.quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+    animation: chatFadeIn 0.4s ease;
+    flex-shrink: 0;
+    padding-left: 38px; /* align with bot messages (after avatar) */
+}
+.quick-reply-chip {
+    background: white;
+    color: #667eea;
+    border: 1.5px solid #667eea;
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-size: 0.75em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.quick-reply-chip:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(102,126,234,0.25);
+}
+
+/* --- Diagnosis card row --- */
+.diagnosis-card-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    animation: chatFadeIn 0.4s ease;
+    flex-shrink: 0;
+}
+

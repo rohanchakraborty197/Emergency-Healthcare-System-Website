@@ -13,7 +13,7 @@ import { GoogleGenAI } from "@google/genai";
 
 const SALT_ROUNDS = 10; // Cost factor for bcrypt hashing
 
-// Default dispatch origin (TrackNHeal HQ - Kolkata)
+// Default dispatch origin for ambulance (TrackNHeal HQ - Kolkata)
 const DISPATCH_ORIGIN = { lat: 22.5726, lng: 88.3639 };
 
 const __filename = fileURLToPath(import.meta.url);
@@ -101,18 +101,24 @@ function findSpecialist(diseaseName) {
 }
 
 // Medical AI System Prompt
-const MEDICAL_SYSTEM_PROMPT = `You are an AI medical assistant for TrackNHeal, a healthcare platform offering ambulance booking, doctor appointments, and AI symptom diagnosis.
+const MEDICAL_SYSTEM_PROMPT = `You are MediBot, a warm and knowledgeable AI medical assistant for TrackNHeal — a healthcare platform offering ambulance booking, doctor appointments, and AI symptom diagnosis.
 
 ## Your Personality
 - Warm, empathetic, and conversational — like a caring friend who is medically knowledgeable
 - Use emojis naturally but not excessively
-- Be reassuring but honest
-- Never be robotic or overly clinical
-- **KEEP REPLIES SHORT** — 1-2 sentences max. Be concise and to the point. No long paragraphs or lists in the "reply" field.
+- Be reassuring but honest — never alarmist
+- **KEEP REPLIES SHORT** — 1-2 sentences max in the "reply" field. Be concise. No long paragraphs or bullet lists in "reply".
+- You have memory of the entire conversation — always refer back to what the user has already told you. Never ask for information they have already provided.
+
+## Conversation Rules
+1. When gathering symptoms, ask ONLY ONE clarifying question at a time — never multiple questions in one message.
+2. Build on the conversation history — if the user already said "I have fever", don't ask about fever again.
+3. After 2-3 symptoms are described, attempt a diagnosis. Don't keep asking endlessly.
+4. If the user gives a follow-up like "also headache" or "it's getting worse", combine it with what they said before.
 
 ## Your Capabilities
 1. Emergency Detection — Identify life-threatening situations (heart attack, stroke, unconscious, not breathing, severe bleeding, accident, trauma, seizure, collapsed, choking, overdose, suicide)
-2. Symptom Analysis — Analyze described symptoms and provide a probable diagnosis
+2. Symptom Analysis — Analyze described symptoms across the full conversation and provide a probable diagnosis
 3. Medical FAQs — Answer questions about diseases, treatments, medications
 4. Platform Guidance — Help users navigate TrackNHeal (booking doctors, ambulances, checking appointments)
 5. General Conversation — Handle greetings, thanks, goodbyes
@@ -128,26 +134,72 @@ ${diseaseReference}
 - Email: help@tracknheal.com
 
 ## Response Rules
-1. For emergencies: Always urge immediate action and suggest booking an ambulance
-2. For diagnoses: ONLY use disease names from the supported list above. Provide confidence as a decimal 0.0-1.0. Include matched symptoms as underscore_separated names.
-3. For follow-ups: If user describes fewer than 2-3 clear symptoms, ask clarifying questions
-4. Always include a brief disclaimer that you are an AI assistant and the user should consult a real doctor for confirmed diagnosis
-5. If asked about a disease directly (e.g., "what is diabetes"), provide educational info as type "faq"
+1. For emergencies: Always urge immediate action and suggest booking an ambulance immediately
+2. For diagnoses: ONLY use disease names from the supported list above. Provide confidence as a decimal 0.0-1.0. Include ALL matched symptoms from the ENTIRE conversation as underscore_separated names.
+3. For follow-ups: Ask only ONE short clarifying question. Never ask multiple questions at once.
+4. Always end with a brief disclaimer that you are an AI and the user should consult a real doctor for confirmed diagnosis.
+5. If asked about a disease directly (e.g., "what is diabetes"), provide educational info as type "faq".
 
 ## CRITICAL: Response Format
-Respond with ONLY valid JSON. No markdown fences, no extra text. Use this format:
+Respond with ONLY valid JSON. No markdown fences, no extra text. Use this exact format:
 
 For emergency:
 {"type":"emergency","reply":"your response text"}
 
-For diagnosis (when you can identify a disease):
+For diagnosis (when you can identify a disease from symptoms):
 {"type":"diagnosis","reply":"your brief response","disease":"Exact Disease Name","confidence":0.85,"severity":"high","matchedSymptoms":["symptom_one","symptom_two"],"top3":[{"disease":"Name1","confidence":0.85,"severity":"high"},{"disease":"Name2","confidence":0.10,"severity":"medium"},{"disease":"Name3","confidence":0.05,"severity":"low"}]}
 
-For follow-up (need more symptoms):
-{"type":"followup","reply":"your response asking for more details"}
+For follow-up (need more info — ask exactly ONE question):
+{"type":"followup","reply":"your single clarifying question"}
 
-For all other responses (greetings, thanks, bye, FAQ, conversation):
-{"type":"greeting|farewell|thanks|faq|conversation","reply":"your response text"}`;
+For all other responses (greetings, thanks, bye, FAQ, general chat):
+{"type":"greeting|farewell|thanks|faq|conversation","reply":"your response text","quickReplies":["suggestion 1","suggestion 2","suggestion 3"]}
+
+For followup type, you MAY also include quickReplies with symptom suggestions relevant to what's been discussed:
+{"type":"followup","reply":"your question","quickReplies":["Yes, I also have fever","No other symptoms","It started 2 days ago"]}`;
+
+// ============================================
+// ✅ CONVERSATION SESSION STORE (in-memory)
+// ============================================
+
+// Map<sessionId, { history: Array, lastActivity: Date }>
+const conversationSessions = new Map();
+
+// Session TTL: 30 minutes of inactivity
+const SESSION_TTL_MS = 30 * 60 * 1000;
+const MAX_HISTORY_TURNS = 20; // max user+model turn pairs to keep
+
+// Purge expired sessions every 10 minutes
+setInterval(() => {
+    const now = Date.now();
+    for (const [id, session] of conversationSessions) {
+        if (now - session.lastActivity > SESSION_TTL_MS) {
+            conversationSessions.delete(id);
+        }
+    }
+}, 10 * 60 * 1000);
+
+function getOrCreateSession(sessionId) {
+    if (!sessionId) return { history: [] }; // anonymous / fallback
+    if (!conversationSessions.has(sessionId)) {
+        conversationSessions.set(sessionId, { history: [], lastActivity: Date.now() });
+    }
+    const session = conversationSessions.get(sessionId);
+    session.lastActivity = Date.now();
+    return session;
+}
+
+function appendToSession(sessionId, role, text) {
+    if (!sessionId) return;
+    const session = conversationSessions.get(sessionId);
+    if (!session) return;
+    session.history.push({ role, parts: [{ text }] });
+    // Trim to last MAX_HISTORY_TURNS * 2 entries (each turn = 1 user + 1 model)
+    if (session.history.length > MAX_HISTORY_TURNS * 2) {
+        session.history.splice(0, 2); // drop oldest turn pair
+    }
+    session.lastActivity = Date.now();
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -361,12 +413,29 @@ db.connect(err => {
     // Add assignment columns to bookings if missing
     const addBookingCols = [
         "ALTER TABLE bookings ADD COLUMN assigned_ambulance_id INT DEFAULT NULL",
-        "ALTER TABLE bookings ADD COLUMN assigned_driver_id INT DEFAULT NULL"
+        "ALTER TABLE bookings ADD COLUMN assigned_driver_id INT DEFAULT NULL",
+        "ALTER TABLE bookings ADD COLUMN fare DECIMAL(10,2) DEFAULT 0.00",
+        "ALTER TABLE bookings ADD COLUMN driver_rating INT DEFAULT NULL"
     ];
     addBookingCols.forEach(sql => {
         db.query(sql, (err) => {
             if (err && !err.message.includes('Duplicate column')) {
                 console.error('Booking column migration:', err.message);
+            }
+        });
+    });
+
+    // Add analytical columns to ambulance_drivers if missing
+    const addDriverCols = [
+        "ALTER TABLE ambulance_drivers ADD COLUMN rating FLOAT DEFAULT 5.0",
+        "ALTER TABLE ambulance_drivers ADD COLUMN total_ratings INT DEFAULT 0",
+        "ALTER TABLE ambulance_drivers ADD COLUMN total_trips INT DEFAULT 0",
+        "ALTER TABLE ambulance_drivers ADD COLUMN total_earnings DECIMAL(10,2) DEFAULT 0.00"
+    ];
+    addDriverCols.forEach(sql => {
+        db.query(sql, (err) => {
+            if (err && !err.message.includes('Duplicate column')) {
+                console.error('Driver column migration:', err.message);
             }
         });
     });
@@ -1206,10 +1275,49 @@ app.put("/driver/rides/:bookingId/accept", async (req, res) => {
 app.put("/driver/rides/:bookingId/complete", (req, res) => {
     const { bookingId } = req.params;
     const { driverId } = req.body;
-    db.query("UPDATE bookings SET status = 'completed' WHERE id = ? AND assigned_driver_id = ?", [bookingId, driverId], (err, result) => {
+    
+    // Mock fare calculation
+    const fare = Math.floor(Math.random() * 1500) + 500;
+    
+    db.query("UPDATE bookings SET status = 'completed', fare = ? WHERE id = ? AND assigned_driver_id = ?", [fare, bookingId, driverId], (err, result) => {
         if (err) return res.json({ success: false, message: "Failed to complete ride" });
-        db.query("UPDATE ambulance_drivers SET status = 'available' WHERE id = ?", [driverId]);
+        db.query("UPDATE ambulance_drivers SET status = 'available', total_trips = total_trips + 1, total_earnings = total_earnings + ? WHERE id = ?", [fare, driverId]);
         res.json({ success: true, message: "Ride completed" });
+    });
+});
+
+// User rates a driver
+app.post("/user/bookings/:bookingId/rate", (req, res) => {
+    const { bookingId } = req.params;
+    const { rating } = req.body;
+    
+    if (!rating || rating < 1 || rating > 5) return res.json({ success: false, message: "Invalid rating" });
+
+    db.query("UPDATE bookings SET driver_rating = ? WHERE id = ?", [rating, bookingId], (err, result) => {
+        if (err) return res.json({ success: false, message: "Failed to submit rating" });
+        
+        db.query("SELECT assigned_driver_id FROM bookings WHERE id = ?", [bookingId], (dErr, dRes) => {
+            if (dErr || dRes.length === 0 || !dRes[0].assigned_driver_id) return res.json({ success: true });
+            const driverId = dRes[0].assigned_driver_id;
+            
+            db.query("SELECT rating, total_ratings FROM ambulance_drivers WHERE id = ?", [driverId], (rErr, rRes) => {
+                if (rErr || rRes.length === 0) return res.json({ success: true });
+                const driver = rRes[0];
+                const newTotalRatings = driver.total_ratings + 1;
+                const newRating = ((driver.rating * driver.total_ratings) + parseInt(rating)) / newTotalRatings;
+                
+                db.query("UPDATE ambulance_drivers SET rating = ?, total_ratings = ? WHERE id = ?", [newRating, newTotalRatings, driverId]);
+                res.json({ success: true, message: "Rating submitted successfully" });
+            });
+        });
+    });
+});
+
+// Get Driver Stats
+app.get("/driver/stats/:driverId", (req, res) => {
+    db.query("SELECT rating, total_trips, total_earnings FROM ambulance_drivers WHERE id = ?", [req.params.driverId], (err, results) => {
+        if (err || results.length === 0) return res.json({ success: false });
+        res.json({ success: true, stats: results[0] });
     });
 });
 
@@ -1356,6 +1464,44 @@ app.put("/doctor/appointments/:id/status", (req, res) => {
 });
 
 
+// ✅ ADMIN: GET ALL DRIVERS & AMBULANCES
+app.get("/admin/fleet/drivers", (req, res) => {
+    const sql = `
+        SELECT d.*, a.vehicle_id, a.plate_number, a.ambulance_type
+        FROM ambulance_drivers d
+        LEFT JOIN ambulances a ON d.assigned_ambulance_id = a.id
+        ORDER BY d.created_at DESC
+    `;
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Fetch drivers error:", err);
+            return res.json({ success: false, message: "Failed to fetch fleet data" });
+        }
+        res.json({ success: true, drivers: results });
+    });
+});
+
+// ✅ ADMIN: GET LIVE TRACKING DATA
+app.get("/admin/fleet/live", (req, res) => {
+    const sql = `
+        SELECT t.booking_id, t.ambulance_lat, t.ambulance_lng, t.status as tracking_status, 
+               b.patient_name, b.phone, d.name as driver_name, a.vehicle_id 
+        FROM ambulance_tracking t
+        JOIN bookings b ON t.booking_id = b.id
+        LEFT JOIN ambulance_drivers d ON b.assigned_driver_id = d.id
+        LEFT JOIN ambulances a ON b.assigned_ambulance_id = a.id
+        WHERE t.status IN ('dispatched', 'en_route')
+    `;
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Fetch live tracking error:", err);
+            return res.json({ success: false, message: "Failed to fetch live tracking data" });
+        }
+        res.json({ success: true, live: results });
+    });
+});
+
+
 // ✅ GET ALL DOCTORS
 app.get("/doctors", (req, res) => {
     const sql = "SELECT * FROM doctors ORDER BY id DESC";
@@ -1383,21 +1529,30 @@ app.get("/doctors/specialization/:spec", (req, res) => {
 
 
 // ============================================
-// ✅ AI MEDICAL CHATBOT API (Gemini-Powered)
+// ✅ AI MEDICAL CHATBOT API (Gemini-Powered, Multi-Turn)
 // ============================================
 
 app.post("/chat", async (req, res) => {
-    const { message } = req.body;
+    const { message, sessionId } = req.body;
 
     if (!message) {
         return res.json({ success: false, reply: "Hmm, I didn't quite get that. Could you say that again for me?" });
     }
 
+    // Retrieve or create the session's conversation history
+    const session = getOrCreateSession(sessionId);
+
+    // Build the contents array: existing history + new user message
+    const contents = [
+        ...session.history,
+        { role: "user", parts: [{ text: message }] }
+    ];
+
     try {
-        // Call Gemini API with medical system prompt
+        // Call Gemini API with full multi-turn conversation history
         const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: message,
+            contents,
             config: {
                 systemInstruction: MEDICAL_SYSTEM_PROMPT,
                 responseMimeType: "application/json",
@@ -1422,13 +1577,18 @@ app.post("/chat", async (req, res) => {
 
         const responseType = data.type;
 
+        // Persist user message and model response to session history
+        appendToSession(sessionId, 'user', message);
+        appendToSession(sessionId, 'model', responseText);
+
         // ── Emergency Response ──
         if (responseType === "emergency") {
             return res.json({
                 success: true,
                 reply: data.reply,
                 action: "ambulance",
-                richData: null
+                richData: null,
+                quickReplies: ["Book ambulance now", "Call 123-456-7890"]
             });
         }
 
@@ -1495,7 +1655,10 @@ app.post("/chat", async (req, res) => {
                 reply,
                 action,
                 richData,
-                accumulatedSymptoms: []
+                accumulatedSymptoms: [],
+                quickReplies: action === 'ambulance'
+                    ? ["Book ambulance now", "More info"]
+                    : ["Book a doctor", "Tell me more", "What medications?"]
             });
         }
 
@@ -1506,7 +1669,8 @@ app.post("/chat", async (req, res) => {
                 reply: data.reply,
                 action: null,
                 richData: null,
-                needsMoreInfo: true
+                needsMoreInfo: true,
+                quickReplies: data.quickReplies || []
             });
         }
 
@@ -1515,7 +1679,8 @@ app.post("/chat", async (req, res) => {
             success: true,
             reply: data.reply,
             action: null,
-            richData: null
+            richData: null,
+            quickReplies: data.quickReplies || []
         });
 
     } catch (err) {
@@ -1524,9 +1689,19 @@ app.post("/chat", async (req, res) => {
             success: true,
             reply: "Sorry, I'm having a little trouble right now 😔 — try again in a moment or use the homepage to book a doctor or ambulance!",
             action: null,
-            richData: null
+            richData: null,
+            quickReplies: []
         });
     }
+});
+
+// ✅ Clear a chat session
+app.post("/chat/clear", (req, res) => {
+    const { sessionId } = req.body;
+    if (sessionId && conversationSessions.has(sessionId)) {
+        conversationSessions.delete(sessionId);
+    }
+    res.json({ success: true });
 });
 
 

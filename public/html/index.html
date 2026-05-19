@@ -434,29 +434,55 @@
         </div>
     </div>
 
-    <!---------------- CHATBOT WIDGET ---------------->
+    <!---------------- RATE DRIVER MODAL ---------------->
+    <div id="rateModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <span class="close" onclick="closeRateModal()">&times;</span>
+            <div style="font-size: 3em; margin-bottom: 10px;">⭐</div>
+            <h2 style="color: var(--primary-color); margin-bottom: 5px;">Rate Your Driver</h2>
+            <p style="color: #666; margin-bottom: 20px;">How was your ambulance ride?</p>
+            
+            <div id="starSelection" style="font-size: 2.5em; cursor: pointer; color: #ccc; margin-bottom: 20px;">
+                <span class="star" data-value="1" onclick="selectRating(1)">★</span>
+                <span class="star" data-value="2" onclick="selectRating(2)">★</span>
+                <span class="star" data-value="3" onclick="selectRating(3)">★</span>
+                <span class="star" data-value="4" onclick="selectRating(4)">★</span>
+                <span class="star" data-value="5" onclick="selectRating(5)">★</span>
+            </div>
+            
+            <input type="hidden" id="rateBookingId" value="">
+            <input type="hidden" id="selectedRating" value="0">
+            
+            <button class="submit-btn" id="submitRateBtn" onclick="submitRating()" style="background: linear-gradient(135deg, #f1c40f, #f39c12); width: 100%;">Submit Rating</button>
+        </div>
+    </div>
+
+    <!-- CHATBOT WIDGET -->
     <div class="chat-widget">
-        <button class="chat-btn" onclick="toggleChat()">🤖</button>
+        <button class="chat-btn" onclick="toggleChat()" title="AI Medical Assistant">🤖</button>
     </div>
 
     <div class="chat-window" id="chatWindow">
         <div class="chat-header">
             <div class="chat-header-info">
                 <div class="chat-header-dot"></div>
-                <span>AI Medical Chatbot</span>
+                <div>
+                    <div style="font-weight:700;font-size:0.95em;">MediBot AI</div>
+                    <div style="font-size:0.72em;opacity:0.85;font-weight:400;">Symptom checker &amp; health guide</div>
+                </div>
             </div>
-            <span style="cursor:pointer; font-size:1.1em;" onclick="toggleChat()">✖</span>
+            <div class="chat-header-controls">
+                <button class="chat-clear-btn" onclick="clearChat()" title="Clear conversation">🗑 Clear</button>
+                <button class="chat-close-btn" onclick="toggleChat()" title="Close">✖</button>
+            </div>
         </div>
         <div class="chat-body" id="chatBody">
-            <div class="chat-message bot-msg">
-                Hello! 👋 I'm your AI Medical Chatbot. Describe your symptoms (e.g., "I have fever
-                and headache") and I'll analyze them.
-            </div>
+            <!-- Initial bot message rendered by JS on open -->
         </div>
         <div class="chat-input-area">
-            <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..."
-                onkeypress="handleChatKeyPress(event)">
-            <button class="chat-send" onclick="sendMessage()">➤</button>
+            <input type="text" id="chatInput" class="chat-input" placeholder="Describe your symptoms..."
+                onkeypress="handleChatKeyPress(event)" maxlength="500">
+            <button class="chat-send" onclick="sendMessage()" title="Send">➤</button>
         </div>
     </div>
     <!---------------- JS FUNCTIONS ---------------->
@@ -837,39 +863,180 @@
         }
 
         /* ✅ CHATBOT LOGIC */
+
+        // Generate a unique session ID for this browser tab's chat session
+        let chatSessionId = 'sess-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        let chatIsOpen = false;
+
         function toggleChat() {
             const chatWindow = document.getElementById("chatWindow");
-            const isVisible = chatWindow.style.display === "flex";
-            chatWindow.style.display = isVisible ? "none" : "flex";
+            chatIsOpen = !chatIsOpen;
+            chatWindow.style.display = chatIsOpen ? "flex" : "none";
+            if (chatIsOpen) {
+                // Show welcome message if chat body is empty
+                const chatBody = document.getElementById('chatBody');
+                if (chatBody.children.length === 0) {
+                    showWelcomeMessage();
+                }
+                setTimeout(() => document.getElementById('chatInput').focus(), 100);
+            }
+        }
+
+        function showWelcomeMessage() {
+            const welcomeText = "👋 Hi! I'm <strong>MediBot</strong>, your AI health assistant. Tell me your symptoms and I'll help you figure out what's going on. Or ask me anything health-related!";
+            appendBotMessage(welcomeText);
+            showQuickReplies(["I have a symptom", "Book a doctor", "Book an ambulance", "What is diabetes?"]);
+        }
+
+        async function clearChat() {
+            // Tell server to clear session history
+            try {
+                await fetch('/chat/clear', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId: chatSessionId })
+                });
+            } catch(e) {}
+            // Generate a new session ID
+            chatSessionId = 'sess-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+            // Clear the chat body and show welcome
+            const chatBody = document.getElementById('chatBody');
+            chatBody.innerHTML = '';
+            showWelcomeMessage();
         }
 
         function handleChatKeyPress(e) {
             if (e.key === "Enter") sendMessage();
         }
 
-        // Track accumulated symptoms for multi-turn diagnosis
-        let chatAccumulatedSymptoms = [];
+        function getTimestamp() {
+            return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function appendBotMessage(html, isTyping = false) {
+            const chatBody = document.getElementById('chatBody');
+            // Remove existing quick replies
+            const existingChips = chatBody.querySelectorAll('.quick-replies');
+            existingChips.forEach(c => c.remove());
+
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'chat-message-row bot-row';
+            if (isTyping) rowDiv.id = 'typing-row-' + Date.now();
+
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'chat-avatar';
+            avatarDiv.textContent = '🩺';
+
+            const bubbleWrap = document.createElement('div');
+            bubbleWrap.className = 'chat-bubble-wrap';
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message bot-msg';
+            msgDiv.innerHTML = html;
+
+            bubbleWrap.appendChild(msgDiv);
+
+            if (!isTyping) {
+                const ts = document.createElement('div');
+                ts.className = 'chat-timestamp';
+                ts.textContent = getTimestamp();
+                bubbleWrap.appendChild(ts);
+            }
+
+            rowDiv.appendChild(avatarDiv);
+            rowDiv.appendChild(bubbleWrap);
+            chatBody.appendChild(rowDiv);
+            scrollChatToBottom();
+            return rowDiv.id;
+        }
+
+        function appendUserMessage(text) {
+            const chatBody = document.getElementById('chatBody');
+            // Remove existing quick replies when user sends
+            chatBody.querySelectorAll('.quick-replies').forEach(c => c.remove());
+
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'chat-message-row user-row';
+
+            const bubbleWrap = document.createElement('div');
+            bubbleWrap.className = 'chat-bubble-wrap';
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message user-msg';
+            msgDiv.textContent = text;
+
+            const ts = document.createElement('div');
+            ts.className = 'chat-timestamp';
+            ts.textContent = getTimestamp();
+
+            bubbleWrap.appendChild(msgDiv);
+            bubbleWrap.appendChild(ts);
+            rowDiv.appendChild(bubbleWrap);
+            chatBody.appendChild(rowDiv);
+            scrollChatToBottom();
+        }
+
+        function showTypingIndicator() {
+            const chatBody = document.getElementById('chatBody');
+            const rowDiv = document.createElement('div');
+            const typingId = 'typing-row-' + Date.now();
+            rowDiv.id = typingId;
+            rowDiv.className = 'chat-message-row bot-row';
+
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'chat-avatar';
+            avatarDiv.textContent = '🩺';
+
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator';
+            indicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+
+            rowDiv.appendChild(avatarDiv);
+            rowDiv.appendChild(indicator);
+            chatBody.appendChild(rowDiv);
+            scrollChatToBottom();
+            return typingId;
+        }
+
+        function showQuickReplies(chips) {
+            if (!chips || chips.length === 0) return;
+            const chatBody = document.getElementById('chatBody');
+            const container = document.createElement('div');
+            container.className = 'quick-replies';
+            chips.forEach(text => {
+                const chip = document.createElement('button');
+                chip.className = 'quick-reply-chip';
+                chip.textContent = text;
+                chip.onclick = () => {
+                    chip.closest('.quick-replies').remove();
+                    document.getElementById('chatInput').value = text;
+                    sendMessage();
+                };
+                container.appendChild(chip);
+            });
+            chatBody.appendChild(container);
+            scrollChatToBottom();
+        }
 
         async function sendMessage() {
             const input = document.getElementById("chatInput");
             const message = input.value.trim();
             if (!message) return;
 
-            // User Message
-            appendMessage(message, 'user');
             input.value = "";
+            input.disabled = true;
 
-            // Bot "Analyzing" indicator
-            const typingId = appendMessage("🧠 Analyzing...", 'bot', true);
+            // Append user message
+            appendUserMessage(message);
+
+            // Show animated typing indicator
+            const typingId = showTypingIndicator();
 
             try {
                 const res = await fetch("/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        message,
-                        accumulatedSymptoms: chatAccumulatedSymptoms
-                    })
+                    body: JSON.stringify({ message, sessionId: chatSessionId })
                 });
                 const data = await res.json();
 
@@ -878,32 +1045,31 @@
                 if (typingEl) typingEl.remove();
 
                 if (data.success) {
-                    // Track accumulated symptoms from backend
-                    if (data.accumulatedSymptoms && data.accumulatedSymptoms.length > 0) {
-                        chatAccumulatedSymptoms = [...new Set([...chatAccumulatedSymptoms, ...data.accumulatedSymptoms])];
-                    }
-                    // Clear accumulated symptoms after a diagnosis
-                    if (data.accumulatedSymptoms && data.accumulatedSymptoms.length === 0) {
-                        chatAccumulatedSymptoms = [];
-                    }
-
-                    // If richData is available, render a diagnosis card
                     if (data.richData) {
                         renderDiagnosisCard(data.richData, data.action);
+                        if (data.quickReplies && data.quickReplies.length > 0) {
+                            showQuickReplies(data.quickReplies);
+                        }
                     } else {
-                        // Simple text reply (greetings, FAQ, follow-ups, etc.)
-                        let botReply = data.reply.replace(/\n/g, '<br>');
+                        // Simple text reply with basic markdown
+                        let botReply = (data.reply || '').replace(/\n/g, '<br>');
                         botReply = botReply.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                        appendMessage(botReply, 'bot');
+                        appendBotMessage(botReply);
+                        if (data.quickReplies && data.quickReplies.length > 0) {
+                            showQuickReplies(data.quickReplies);
+                        }
                     }
                 } else {
-                    appendMessage("Sorry, I encountered an error. Please try again.", 'bot');
+                    appendBotMessage("Sorry, I encountered an error. Please try again.");
                 }
 
             } catch (err) {
                 const typingEl = document.getElementById(typingId);
                 if (typingEl) typingEl.remove();
-                appendMessage("Network error. Please check your connection.", 'bot');
+                appendBotMessage("Network error. Please check your connection and try again.");
+            } finally {
+                input.disabled = false;
+                input.focus();
             }
         }
 
@@ -1038,7 +1204,33 @@
                     ${actionsHtml}
                 </div>`;
 
-            chatBody.insertAdjacentHTML('beforeend', cardHtml);
+            // Remove any existing quick-reply chips
+            chatBody.querySelectorAll('.quick-replies').forEach(c => c.remove());
+
+            // Wrap card in an avatar row for visual consistency
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'diagnosis-card-row';
+
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'chat-avatar';
+            avatarDiv.style.alignSelf = 'flex-start';
+            avatarDiv.style.marginTop = '4px';
+            avatarDiv.textContent = '🩺';
+
+            const wrapDiv = document.createElement('div');
+            wrapDiv.style.display = 'flex';
+            wrapDiv.style.flexDirection = 'column';
+            wrapDiv.style.gap = '3px';
+            wrapDiv.innerHTML = cardHtml;
+
+            const ts = document.createElement('div');
+            ts.className = 'chat-timestamp';
+            ts.textContent = getTimestamp();
+            wrapDiv.appendChild(ts);
+
+            rowDiv.appendChild(avatarDiv);
+            rowDiv.appendChild(wrapDiv);
+            chatBody.appendChild(rowDiv);
             scrollChatToBottom();
         }
 
@@ -1050,25 +1242,6 @@
                     chatBody.scrollTop = chatBody.scrollHeight;
                 }, 50);
             });
-        }
-
-        function appendMessage(text, sender, isTyping = false) {
-            const chatBody = document.getElementById("chatBody");
-            const msgDiv = document.createElement("div");
-            msgDiv.className = `chat-message ${sender}-msg`;
-            // Basic markdown-like formatting
-            let formatted = text.replace(/\n/g, '<br>');
-            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            msgDiv.innerHTML = formatted;
-            if (isTyping) {
-                msgDiv.id = "typing-" + Date.now();
-                msgDiv.style.opacity = '0.7';
-                msgDiv.style.fontStyle = 'italic';
-            }
-
-            chatBody.appendChild(msgDiv);
-            scrollChatToBottom();
-            return msgDiv.id;
         }
 
 
@@ -1248,6 +1421,10 @@
                                 `<span style="display:inline-block; margin-top:10px; margin-left:8px; background:rgba(255,165,2,0.12); color:#f39c12; padding:8px 16px; border-radius:6px; font-weight:600; font-size:0.85em; border:1px solid rgba(255,165,2,0.25);">⏳ Awaiting Dispatch</span>` : ''}
                                 ${(booking.status === 'dispatched') ?
                                 `<a href="/tracking.html?bookingId=${booking.id}" style="display:inline-block; margin-top:10px; margin-left:8px; background: linear-gradient(135deg, #00d4ff, #0099cc); color:white; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:600; font-size:0.85em; transition:all 0.3s ease;">🗺️ Track Live</a>` : ''}
+                                ${(booking.status === 'completed' && !booking.driver_rating) ?
+                                `<button class="rate-driver-btn" onclick="openRateModal(${booking.id})" style="display:inline-block; margin-top:10px; background: linear-gradient(135deg, #f1c40f, #f39c12); color:white; border:none; padding:8px 16px; border-radius:6px; font-weight:600; font-size:0.85em; cursor:pointer;">⭐ Rate Driver</button>` : ''}
+                                ${(booking.status === 'completed' && booking.driver_rating) ?
+                                `<span style="display:inline-block; margin-top:10px; background: rgba(241, 196, 15, 0.1); color: #f39c12; padding:8px 16px; border-radius:6px; font-weight:600; font-size:0.85em;">⭐ You Rated: ${booking.driver_rating}/5</span>` : ''}
                             </div>
                         `).join('');
                     } else {
@@ -1379,10 +1556,76 @@
                 event.target.style.display = "none";
                 if (event.target.id === "bookingModal") {
                     resetBookingForm();
+                } else if (event.target.id === "rateModal") {
+                    closeRateModal();
                 }
             }
         }
 
+
+        // ============================================
+        // DRIVER RATING FUNCTIONS
+        // ============================================
+
+        function openRateModal(bookingId) {
+            document.getElementById('rateBookingId').value = bookingId;
+            document.getElementById('selectedRating').value = '0';
+            selectRating(0); // Reset stars
+            document.getElementById('rateModal').style.display = 'block';
+        }
+
+        function closeRateModal() {
+            document.getElementById('rateModal').style.display = 'none';
+        }
+
+        function selectRating(rating) {
+            document.getElementById('selectedRating').value = rating;
+            const stars = document.querySelectorAll('#starSelection .star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.style.color = '#f1c40f'; // Gold
+                } else {
+                    star.style.color = '#ccc'; // Gray
+                }
+            });
+        }
+
+        async function submitRating() {
+            const bookingId = document.getElementById('rateBookingId').value;
+            const rating = parseInt(document.getElementById('selectedRating').value);
+            
+            if (rating < 1 || rating > 5) {
+                alert('Please select a star rating first!');
+                return;
+            }
+            
+            const btn = document.getElementById('submitRateBtn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            try {
+                const response = await fetch(`/user/bookings/${bookingId}/rate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rating })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    closeRateModal();
+                    alert('Thanks for your feedback!');
+                    loadBookingHistory(); // Refresh the list
+                } else {
+                    alert(data.message || 'Failed to submit rating');
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Submit Rating';
+            }
+        }
 
         // ============================================
         // DOCTOR APPOINTMENT FUNCTIONS

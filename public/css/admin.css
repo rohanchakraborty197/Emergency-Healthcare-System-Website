@@ -1306,3 +1306,23 @@
                 font-size: 0.85em;
             }
         }
+
+        /* ==================== LEAFLET MAP STYLES ==================== */
+        .leaflet-popup-content-wrapper {
+            background: var(--bg-card);
+            color: var(--text-light);
+            border-radius: 12px;
+            border: 1px solid var(--border-color-dark);
+            box-shadow: var(--shadow-dark);
+            font-family: 'Inter', sans-serif;
+        }
+        .leaflet-popup-tip {
+            background: var(--bg-card);
+        }
+        .leaflet-container a.leaflet-popup-close-button {
+            color: var(--text-muted);
+            padding: 4px;
+        }
+        .leaflet-container a.leaflet-popup-close-button:hover {
+            color: var(--primary-color);
+        }

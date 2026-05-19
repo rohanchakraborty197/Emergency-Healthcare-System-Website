@@ -38,10 +38,20 @@
             <div class="stat-num" id="statActive">0</div>
             <div class="stat-label">My Active Rides</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon">✅</div>
-            <div class="stat-num" id="statCompleted">0</div>
-            <div class="stat-label">Completed Today</div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #f1c40f, #f39c12); color: white;">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-num" id="statRating" style="color: white;">5.0</div>
+            <div class="stat-label" style="color: rgba(255,255,255,0.9);">My Rating</div>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #27ae60, #2ecc71); color: white;">
+            <div class="stat-icon">💰</div>
+            <div class="stat-num" id="statEarnings" style="color: white;">₹0</div>
+            <div class="stat-label" style="color: rgba(255,255,255,0.9);">Total Earnings</div>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #8e44ad, #9b59b6); color: white;">
+            <div class="stat-icon">📈</div>
+            <div class="stat-num" id="statTrips" style="color: white;">0</div>
+            <div class="stat-label" style="color: rgba(255,255,255,0.9);">Lifetime Trips</div>
         </div>
     </section>
 
@@ -92,9 +102,28 @@
             if (activeBtn) activeBtn.classList.add('active');
             loadRides();
             loadHistory();
+            loadStats();
             // Auto-refresh every 15s
-            setInterval(loadRides, 15000);
+            setInterval(() => {
+                loadRides();
+                loadStats();
+            }, 15000);
         };
+
+        async function loadStats() {
+            try {
+                const res = await fetch(`/driver/stats/${driverUser.id}`);
+                const data = await res.json();
+                if (data.success && data.stats) {
+                    const rating = parseFloat(data.stats.rating || 5).toFixed(1);
+                    document.getElementById('statRating').textContent = rating;
+                    document.getElementById('statTrips').textContent = data.stats.total_trips || 0;
+                    document.getElementById('statEarnings').textContent = '₹' + (data.stats.total_earnings || 0);
+                }
+            } catch (e) {
+                console.error("Failed to load stats", e);
+            }
+        }
 
         function driverLogout() {
             sessionStorage.removeItem('driverUser');
@@ -239,6 +268,7 @@
                     setDriverStatus('available');
                     loadRides();
                     loadHistory();
+                    loadStats();
                     alert('✅ Ride completed!');
                 } else { alert(data.message || 'Failed'); }
             } catch (e) { alert('Network error'); }

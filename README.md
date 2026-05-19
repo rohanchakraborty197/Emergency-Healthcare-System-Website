@@ -5,13 +5,14 @@
 <h1 align="center">🏥 TracknHeal</h1>
 
 <p align="center">
-  <b>AI-Powered Medical Assistance & Emergency Ambulance Booking Platform</b>
+  <b>Advanced AI-Powered Medical Assistance, Smart Diagnostics & Ambulance Dispatch Platform</b>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
   <img src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white" />
   <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Gemini_API-8E44AD?style=for-the-badge&logo=google&logoColor=white" />
   <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
   <img src="https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white" />
   <img src="https://img.shields.io/badge/Scikit--Learn-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white" />
@@ -22,12 +23,13 @@
 ## 📋 Table of Contents
 
 - [About](#-about)
-- [Features](#-features)
+- [Key Features](#-key-features)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
 - [Getting Started](#-getting-started)
 - [API Reference](#-api-reference)
-- [AI Chatbot](#-ai-chatbot)
+- [AI Chatbot Ecosystem](#-ai-chatbot-ecosystem)
+- [Ambulance Dispatch & Fleet System](#-ambulance-dispatch--fleet-system)
 - [Database Schema](#-database-schema)
 - [License](#-license)
 
@@ -35,53 +37,47 @@
 
 ## 🩺 About
 
-**TracknHeal** is a full-stack healthcare web application that combines **AI-powered medical diagnosis** with **emergency ambulance booking** and **doctor appointment scheduling**. The platform features a multi-role authentication system (User, Admin, Doctor), a smart chatbot that uses a custom-trained ML model to diagnose **41 diseases** from natural language symptoms, and an admin dashboard for managing all operations.
+**TracknHeal** is an advanced, full-stack healthcare web application that bridges the gap between **intelligent AI-driven clinical diagnostics** and **real-time emergency response**. 
+
+The platform leverages **Google Gemini 2.5 Flash** alongside a **custom RandomForest ML model** to provide clinical diagnosis and lifestyle recommendations based on natural language symptoms. Beyond diagnostics, it integrates a comprehensive **Ambulance Booking & Ride-Hailing System**—complete with a dedicated **Driver Portal**, dynamic pricing/fares, a rating system, and an **Admin Fleet Management Dashboard**—and a **Doctor Portal** for managing appointments and directories.
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
 ### 👤 Patient Portal
-- **User Registration & Login** — Secure authentication with bcrypt password hashing
-- **AI Medical Chatbot** — Describe symptoms in natural language and receive:
-  - Disease prediction with confidence score & severity level
-  - Specialist recommendation with **available doctors from the database**
-  - Medical guidelines (**Medications**, **Diets**, and **Workouts** directly in chat)
-  - Follow-up questions for better diagnosis accuracy
-  - Medical FAQ answers (e.g., "What is diabetes?")
-  - Platform guidance (e.g., "How to book a doctor?")
-  - One-click appointment booking from diagnosis results
-- **Ambulance Booking** — Book emergency ambulances with real-time status tracking
-- **Doctor Directory** — Browse doctors by specialization, degree, hospital, and ratings
-- **Appointment Scheduling** — Book appointments with preferred doctors
-- **Booking History** — View and cancel past ambulance bookings and appointments
+- **Secure Authentication** — Sign up and login for patients with bcrypt password hashing.
+- **Ambulance Booking** — Book emergency ambulances with dynamic pricing/fare computation, live route status, and post-ride driver rating (1-5 stars).
+- **Doctor Directory** — Browse local doctors by specialization, degree, hospital, availability, and rating.
+- **Doctor Appointments** — Schedule visits and view active/past bookings in a unified timeline.
 
-### 🔧 Admin Dashboard
-- **Admin Authentication** — Secure admin login
-- **Booking Management** — View, update status (pending → dispatched → completed), and manage all ambulance bookings
-- **Appointment Management** — Confirm, complete, or cancel doctor appointments
-- **Doctor Management** — Full CRUD operations (Add / Edit / Delete doctors)
-- **User Management** — View registered users and their booking history
-- **Dashboard Analytics** — Real-time statistics and counts
+### 🤖 AI Medical Assistant (Gemini-Powered)
+- **Multi-Turn Conversation** — Natural language conversation with an in-memory session manager that remembers clinical context across messages (up to 20 turns, 30 min expiration).
+- **Hybrid AI/ML Engine** — Combines local symptom extraction and RandomForest classification (99.8% accuracy) with **Gemini 2.5 Flash** for clinical dialogue, negation handling, and FAQs.
+- **Rich Diagnosis Cards** — Custom color-coded clinical cards:
+  - Disease identification, confidence metrics, and severity level (🔴 High, 🟠 Medium, 🟢 Low).
+  - Custom lifestyle guidance (**Medications**, **Diets**, and **Workouts** mapped dynamically).
+  - Recommended specialists based on predicted disease.
+- **Database Doctor Mapping** — Direct link to the database to fetch **real available doctors** matching the recommended specialist specialization in real-time.
+- **One-Click Actions** — Instant buttons inside diagnosis cards to book an appointment or book an emergency ambulance directly.
+- **Premium UI Details** — Smooth animated typing indicators, custom bot/user avatars, HH:MM message timestamps, and a header **"Clear Chat"** control to purge session memory.
 
 ### 👨‍⚕️ Doctor Portal
-- **Doctor Registration** — Doctors can self-register with credentials (name, degree, specialization, hospital, availability)
-- **Doctor Login** — Secure login with bcrypt-hashed passwords
-- **My Patients View** — Doctors see only appointments booked under their name
-- **Role-Aware UI** — "Book Appointment" buttons are hidden when a doctor is logged in
+- **Self-Registration & Profile** — Doctors can register with credentials, specialization, degree, hospital, availability days, and times.
+- **My Patients View** — Specialized dashboard lists appointments scheduled under their name.
+- **Role-Aware UI** — Dynamic element display (hides patient booking buttons when a doctor is logged in).
 
-### 🤖 AI / ML Engine
-- **Custom-trained ML model** (scikit-learn RandomForest ensemble with **99.80%** accuracy)
-- Trained on **29,646 augmented samples** across **41 diseases**
-- **136 symptoms** with severity-weighted feature vectors
-- **NLP symptom extraction** — Extracts symptoms from conversational input with **210+ synonym mappings**
-- **Negation detection** — "I don't have fever" correctly skips fever
-- **Follow-up questions** — Asks clarifying questions when too few symptoms are provided (prevents misdiagnosis)
-- **Medical FAQ** — Answers questions about diseases, prevention, and treatments
-- **Platform guidance** — Helps users navigate the app (booking, login, services)
-- **Doctor recommendation** — Queries the database for available specialists matching the diagnosis
-- **Medical guidelines** — Injects suggested **Medications**, **Diets**, and **Workouts** directly into the diagnosis card
-- **Flask microservice** running on port `5000` with REST API
+### 🚑 Ambulance Driver Portal & Ride-Hailing
+- **Driver Dashboard** — Dedicated mobile-responsive driver portal (`driver-dashboard.html`) to manage incoming emergency bookings.
+- **Booking Status Lifecycle** — Drivers can accept rides, transition statuses (`dispatched` → `en_route` → `arrived` → `dropping` → `completed`), and complete trips.
+- **Dynamic Fare Generator** — Generates fares automatically upon ride completion (based on emergency urgency and trip metrics).
+- **Live Performance Metrics** — Real-time tracking of driver statistics: **Lifetime Trips**, **My Rating (Average)**, and **Total Earnings (₹)**.
+
+### 🔧 Admin & Fleet Dashboard
+- **Admin Authentication** — Secure portal (`admin.html`) for hospital administrators.
+- **Fleet & Driver Dashboard** — Dedicated fleet view to monitor active drivers, online/busy/offline statuses, ratings, earnings, and vehicle assignments.
+- **User & Doctor CRUD** — Full operational control over registered users, doctor listings, and administrative analytics.
+- **Booking & Appointment Controls** — Confirm, complete, dispatch, or cancel bookings and appointments.
 
 ---
 
@@ -89,12 +85,14 @@
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | HTML5, CSS3, JavaScript (Vanilla) |
+| **Frontend** | HTML5, CSS3 (Vanilla Custom Flexbox & Gradients), JavaScript (Vanilla ES6) |
 | **Backend** | Node.js, Express.js |
 | **Database** | MySQL |
-| **ML Model** | Python, scikit-learn, Pandas, Flask |
-| **Auth** | bcrypt (password hashing) |
-| **Other** | dotenv, CORS, mysql2 |
+| **AI LLM Engine** | Gemini 2.5 Flash (via `@google/genai`) |
+| **ML Microservice** | Python 3, Flask, scikit-learn, Pandas, Joblib |
+| **WebSockets** | Socket.io (for real-time dispatch and notification triggers) |
+| **Maps & Routing** | Leaflet.js, OpenStreetMap Nominatim Geocoding API |
+| **Security** | dotenv, bcrypt (password hashing), CORS |
 
 ---
 
@@ -102,46 +100,47 @@
 
 ```
 College_Proj/
-├── server.js                  # Main Node.js/Express backend
-├── package.json               # Node.js dependencies & scripts
-├── requirements.txt           # Python dependencies
-├── .env                       # Environment variables (DB config, port)
-├── start.bat                  # Windows batch script to start both servers
+├── server.js                  # Main Node.js/Express backend (serves static files, manages DB/Auth/APIs)
+├── package.json               # Node.js dependencies, metadata, & scripts
+├── requirements.txt           # Python packages for ML microservice
+├── .env                       # Environment variables (DB credentials, Gemini API key, server port)
+├── start.bat                  # Shell batch script to spin up both servers (Node.js + Flask)
 │
-├── public/                    # Frontend (served as static files)
-│   ├── index.html             # Main patient-facing website + chatbot
-│   ├── admin.html             # Admin dashboard
-│   ├── website-logo.jpeg      # Brand logo
+├── public/                    # Static Assets & Pages
+│   ├── index.html             # Patient Portal homepage + unified AI Chatbot widget
+│   ├── admin.html             # Hospital Admin dashboard
+│   ├── driver-dashboard.html  # Ambulance Driver dashboard
+│   ├── tracking.html          # Ambulance map tracking interface
+│   ├── website-logo.jpeg      # Brand assets
+│   ├── css/
+│   │   ├── index.css          # Homepage & Chatbot styling (avatars, typing animations, dialogs)
+│   │   ├── admin.css          # Admin panel layout
+│   │   └── driver.css         # Mobile-responsive driver portal layouts
 │   └── Ambulance_Website_Background_Video.mp4
 │
 ├── db/
-│   └── tracknheal_db.sql      # Database schema & seed data
+│   └── tracknheal_db.sql      # Database schema, foreign key relations, & bootstrap seed data
 │
-├── ml/                        # Machine Learning module
+├── ml/                        # Machine Learning Module
 │   ├── predict_server.py      # Flask prediction microservice (port 5000)
 │   ├── train_model.py         # Model training script
-│   ├── dataset/               # Training datasets (CSV)
-│   │   ├── dataset.csv        # Symptom-disease dataset
-│   │   ├── Training.csv & Testing.csv # Extended binary datasets
-│   │   ├── medications.csv    # Disease medication mappings
-│   │   ├── diets.csv          # Disease diet mappings
-│   │   ├── workout_df.csv     # Disease workout mappings
-│   │   ├── Symptom-severity.csv
-│   │   ├── symptom_Description.csv
-│   │   └── symptom_precaution.csv
-│   └── model/                 # Trained model artifacts
-│       ├── model.joblib        # Trained ML model
+│   ├── dataset/               # Symptom-disease datasets
+│   │   ├── dataset.csv        # Core disease-symptom relation data
+│   │   ├── Training.csv       # Training binary vectors
+│   │   ├── Testing.csv        # Test binary vectors
+│   │   ├── medications.csv    # Disease-to-Medication mappings
+│   │   ├── diets.csv          # Disease-to-Diet guidelines
+│   │   ├── workout_df.csv     # Disease-to-Workout instructions
+│   │   └── Symptom-severity.csv
+│   └── model/                 # Serialized ML artifacts
+│       ├── model.joblib        # Trained Random Forest ensemble
 │       ├── label_encoder.joblib
 │       ├── symptom_columns.json
-│       ├── severity_weights.json
-│       ├── symptom_synonyms.json
-│       ├── disease_info.json   # Generated bundle (desc, precautions, meds, diets, workouts)
-│       ├── medical_faq.json    # Medical & platform FAQ dataset
-│       ├── followup_questions.json
-│       └── metrics.json        # Training metrics
+│       ├── disease_info.json   # Consolidated disease dictionary (descriptions, precautions, medications, workouts)
+│       └── medical_faq.json    # Local medical FAQ & platform guidance records
 │
-├── DISEASES_LIST.md           # Documentation of all 41 supported diseases
-└── README.md
+├── DISEASES_LIST.md           # Documentation of the 41 supported clinical diseases
+└── README.md                  # Detailed platform documentation
 ```
 
 ---
@@ -150,234 +149,260 @@ College_Proj/
 
 ### Prerequisites
 
-- **Node.js** (v18+)
-- **Python** (3.8+)
-- **MySQL** (8.0+)
+Ensure you have the following installed on your machine:
+- **Node.js** (v18.0.0 or higher)
+- **Python** (v3.8 or higher)
+- **MySQL** (v8.0 or higher)
 
 ### 1. Clone the Repository
-
 ```bash
 git clone https://github.com/your-username/tracknheal.git
 cd tracknheal
 ```
 
-### 2. Set Up the Database
+### 2. Configure environment variables
+Create a `.env` file in the root directory:
+```env
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_NAME=tracknheal_db
+PORT=3000
+GEMINI_API_KEY=your_google_gemini_api_key
+```
 
+### 3. Load the MySQL Database
+Import the schema and bootstrap data:
 ```bash
 mysql -u root -p < db/tracknheal_db.sql
 ```
 
-### 3. Configure Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=tracknheal_db
-PORT=3000
-```
-
-### 4. Install Node.js Dependencies
-
+### 4. Install Project Dependencies
+**Node.js Express backend:**
 ```bash
 npm install
 ```
 
-### 5. Install Python Dependencies
-
+**Python Flask ML microservice:**
 ```bash
 pip install -r requirements.txt
 ```
 
-### 6. Start the ML Prediction Server (Terminal 1)
-
+### 5. Spin Up the Platform
+We provide a simple Windows batch script to launch both servers simultaneously:
 ```bash
-python ml/predict_server.py
+start.bat
 ```
-
-> The Flask server starts on `http://localhost:5000`
-
-### 7. Start the Main Server (Terminal 2)
-
-```bash
-node server.js
-```
-
-> The app is now running at `http://localhost:3000`
+Alternatively, open two separate terminals:
+- **Terminal 1 (Flask ML):** `python ml/predict_server.py` (runs on port 5000)
+- **Terminal 2 (Express Web Server):** `node server.js` (runs on port 3000)
 
 ### Access Points
 
-| Page | URL |
-|------|-----|
-| **Homepage** | http://localhost:3000 |
-| **Admin Panel** | http://localhost:3000/admin.html |
-| **AI Chatbot** | Click the 💬 icon on the homepage |
-
-### Default Credentials
-
-| Role | Email | Password |
-|------|-------|----------|
-| **Admin** | *(as configured in DB)* | *(as configured)* |
-| **Doctor** | *(any registered doctor email)* | `doctor123` |
-| **User** | *(sign up from homepage)* | *(user-set)* |
+| Portal / Interface | URL | Access Details |
+|--------------------|-----|----------------|
+| **Patient Portal** | `http://localhost:3000` | Sign up / Log in directly on the homepage |
+| **AI Medical Assistant** | Click the 🤖 icon on homepage | Persists session automatically on load |
+| **Driver Portal** | `http://localhost:3000/html/driver-login.html` | Log in as driver (Default credentials in DB) |
+| **Admin Dashboard** | `http://localhost:3000/admin.html` | Access hospital-wide analytics |
 
 ---
 
 ## 📡 API Reference
 
-### Authentication
+### 🔐 Authentication
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/signup` | Register a new user |
-| `POST` | `/login` | User login |
-| `POST` | `/admin/login` | Admin login |
-| `POST` | `/doctor/login` | Doctor login |
+| `POST` | `/signup` | Register a new patient account |
+| `POST` | `/login` | Patient login (returns session details) |
+| `POST` | `/admin/login` | Secure administrator access |
 | `POST` | `/doctor/signup` | Doctor registration |
+| `POST` | `/doctor/login` | Doctor dashboard login |
+| `POST` | `/driver/signup` | Register an ambulance driver |
+| `POST` | `/driver/login` | Ambulance driver login |
 
-### Ambulance Bookings
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/book` | Book an ambulance |
-| `GET` | `/bookings/:id` | Get booking details |
-| `GET` | `/user/bookings/:userId` | Get user's bookings |
-| `PUT` | `/user/bookings/:bookingId/cancel` | Cancel a booking |
-
-### Doctors
+### 🤖 AI Chatbot (Gemini & Multi-Turn)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/doctors` | List all doctors |
-| `POST` | `/admin/doctors` | Add a new doctor |
-| `PUT` | `/admin/doctors/:id` | Update doctor info |
-| `DELETE` | `/admin/doctors/:id` | Remove a doctor |
+| `POST` | `/chat` | Submits conversational message, processes memory session, queries Gemini, parses diagnostics, and queries doctor availability |
+| `POST` | `/chat/clear` | Purges the in-memory conversation history for the specified `sessionId` |
 
-### Doctor Appointments
+### 👨‍⚕️ Doctors & Appointments
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/appointments` | Book an appointment |
-| `GET` | `/admin/appointments` | List all appointments |
-| `PUT` | `/admin/appointments/:id/status` | Update appointment status |
-| `GET` | `/admin/appointment-stats` | Get appointment statistics |
-| `GET` | `/user/appointments/:userId` | Get user's appointments |
-| `GET` | `/doctor/appointments/:doctorName` | Get doctor's patient appointments |
+| `GET` | `/doctors` | Lists all registered doctors |
+| `GET` | `/doctors/specialization/:spec` | Fetches available doctors matching a specialization |
+| `POST` | `/appointments` | Schedule a new doctor appointment |
+| `GET` | `/doctor/appointments/:doctorName`| Fetches appointments booked for a specific doctor |
+| `GET` | `/user/appointments/:userId` | Retrieves a patient's historical appointments |
 
-### Admin
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/admin/bookings` | List all bookings |
-| `PUT` | `/admin/bookings/:id/status` | Update booking status |
-| `GET` | `/admin/stats` | Dashboard statistics |
-| `GET` | `/admin/users` | List all users |
-| `GET` | `/admin/users/:userId/bookings` | User's booking history |
-
-### AI Chatbot
+### 🚑 Ambulance Ride-Hailing & Drivers
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/chat` | Send message to chatbot (supports accumulated symptoms) |
-
-### ML Prediction Server (Port 5000)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/analyze` | Full NLP + prediction pipeline (primary chatbot endpoint) |
-| `POST` | `/predict` | Predict disease from symptom names |
-| `POST` | `/nlp-extract` | Extract symptoms from natural text |
-| `POST` | `/faq` | Medical & platform FAQ queries |
-| `GET` | `/symptoms` | List all 131 recognized symptoms |
-| `GET` | `/health` | Health check |
+| `POST` | `/book` | Request an emergency ambulance booking |
+| `GET` | `/user/bookings/:userId` | Fetch a patient's active/past bookings |
+| `PUT` | `/user/bookings/:bookingId/rate` | Submit user feedback rating (1-5 stars) for the driver |
+| `GET` | `/driver/rides/:driverId` | Fetch active emergency ride assigned to a driver |
+| `GET` | `/driver/history/:driverId` | Fetch driver's lifetime trip logs |
+| `PUT` | `/driver/rides/:bookingId/accept` | Driver accepts booking (locks ambulance, calculates dynamic fare) |
+| `PUT` | `/driver/rides/:bookingId/complete` | Driver completes ride (records trip, logs earnings, releases vehicle) |
+| `GET` | `/driver/stats/:driverId` | Retrieves driver analytics (trips, ratings, earnings) |
+| `PUT` | `/driver/status/:driverId` | Set driver status (`available`, `busy`, `offline`) |
 
 ---
 
-## 🤖 AI Chatbot
+## 🤖 AI Chatbot Ecosystem
 
-The chatbot uses a **custom-trained machine learning model** to diagnose diseases from user-described symptoms.
+TracknHeal features a sophisticated dual-AI framework that combines standard neural dialogue with custom diagnostic mapping.
 
-### How It Works
+```
+                  ┌───────────────────────────────────────────┐
+                  │          Patient describes symptom        │
+                  └─────────────────────┬─────────────────────┘
+                                        ▼
+                  ┌───────────────────────────────────────────┐
+                  │   Express Backend (/chat + Session ID)    │
+                  └─────────────────────┬─────────────────────┘
+                                        ▼
+                  ┌───────────────────────────────────────────┐
+                  │    Google Gemini 2.5 Flash LLM Pipeline   │
+                  │   - Assesses session history (max 20)     │
+                  │   - Formulates JSON diagnostic struct     │
+                  └─────────────────────┬─────────────────────┘
+                                        ▼
+                  ┌───────────────────────────────────────────┐
+                  │       Gemini Clinical Output Parser       │
+                  └───────┬───────────────────────────┬───────┘
+                          │ (Clinical Diagnosis)      │ (FAQ / Dialogue)
+                          ▼                           ▼
+        ┌───────────────────────────────────┐       ┌──────────────────────┐
+        │   Fuzzy Match to local ML Db:     │       │   Return Gemini      │
+        │   - Pull description/precautions  │       │   conversational reply │
+        │   - Fetch custom Diets & Workouts │       │   with suggestions   │
+        │   - Identify matching Specialist  │       └──────────────────────┘
+        └─────────────────┬─────────────────┘
+                          ▼
+        ┌───────────────────────────────────┐
+        │   MySQL Doctors Table Query:      │
+        │   - Fetch top 3 available doctors │
+        │   - Check active ratings/schedule │
+        │   - Format direct booking options │
+        └─────────────────┬─────────────────┘
+                          ▼
+        ┌───────────────────────────────────┐
+        │   Render Rich Diagnostic Card:    │
+        │   - Action: book doc/ambulance    │
+        │   - Guidelines: medications/diet  │
+        └───────────────────────────────────┘
+```
 
-1. User describes symptoms in natural language (e.g., *"I have a headache and fever"*)
-2. **NLP engine** extracts symptoms using synonym mapping, negation detection, and partial matching
-3. If too few symptoms are found (< 3), the bot asks **follow-up questions** for better accuracy
-4. With enough symptoms, the ML model predicts the most likely disease with a confidence score
-5. The bot recommends a **specialist** and shows **available doctors** from the database
-6. The user can **book an appointment** directly from the diagnosis card
+### Session parameters
+- **Conversation State**: Session histories are stored in-memory using an Express Map (`conversationSessions`).
+- **Memory Length**: Restricts to the last **20 dialogue turns** to maintain prompt performance.
+- **TTL (Time to Live)**: Purges conversation history automatically after **30 minutes of inactivity** to optimize memory.
 
-### Chatbot Capabilities
+---
 
-| Feature | Example Input |
-|---------|--------------|
-| **Symptom Diagnosis** | "I have fever, headache, and nausea" |
-| **Follow-up Questions** | "I have fever" → asks for more symptoms |
-| **Medical FAQ** | "What is diabetes?" |
-| **Platform Guidance** | "How to book a doctor?" |
-| **Emergency Detection** | "I think I'm having a heart attack" |
-| **Negation Handling** | "I don't have fever but I have headache" |
+## 🚑 Ambulance Dispatch & Fleet System
 
-### Supported Disease Categories
-
-| Category | Count | Examples |
-|----------|-------|---------|
-| 🔴 **High Severity** | 12 | Heart Attack, Tuberculosis, Dengue, Malaria, Pneumonia |
-| 🟠 **Medium Severity** | 8 | Diabetes, Hypertension, Asthma, Jaundice |
-| 🟢 **Low Severity** | 21 | Common Cold, Acne, Migraine, Allergies, GERD |
-
-> See [DISEASES_LIST.md](DISEASES_LIST.md) for the full list of 41 diseases.
-
-### ML Model Details
-
-| Metric | Value |
-|--------|-------|
-| **Algorithm** | Ensemble (RandomForest + GradientBoosting) |
-| **Training Samples** | 4,920 |
-| **Features** | 131 severity-weighted symptom features |
-| **Diseases** | 41 |
-| **NLP Synonyms** | 164+ natural language mappings |
-| **Follow-up Questions** | 15 symptom categories covered |
+The ambulance booking module acts as a complete micro-dispatch workflow:
+1. **Request**: Patient requests a ride. The system flags the booking status as `pending`.
+2. **Acceptance**: Drivers check their portal (`driver-dashboard.html`) and accept the ride. 
+   - The system locks the vehicle status to `busy`.
+   - Generates a **dynamic fare** (calculated on booking severity).
+   - Links the driver's ID and ambulance details to the booking.
+3. **Fulfillment**: The driver transitions state (`dispatched` → `en_route` → `arrived` → `completed`).
+   - On completion, the system logs the fare into **Driver Earnings** and increments their **Lifetime Trips**.
+   - The ambulance and driver status reset back to `available`.
+4. **Rating**: Patients review completed bookings from their profile dashboard and submit a rating (1-5).
+   - This triggers an **incremental rating calculation** in the backend:
+     $$\text{New Rating} = \frac{(\text{Current Avg} \times \text{Total Ratings}) + \text{New Rating}}{\text{Total Ratings} + 1}$$
+   - Instantly updates the driver's public portfolio and admin dashboards.
 
 ---
 
 ## 🗄 Database Schema
 
-The application uses **5 MySQL tables**:
+The platform is structured on **8 interconnected tables** within MySQL:
 
 ```
-┌──────────────────┐     ┌──────────────────────────┐
-│      users       │     │        bookings           │
-├──────────────────┤     ├──────────────────────────┤
-│ id (PK)          │◄────│ user_id (FK)              │
-│ name             │     │ patient_name              │
-│ email (UNIQUE)   │     │ phone, pickup, drop       │
-│ password (hash)  │     │ emergency_type, status    │
-└──────────────────┘     └──────────────────────────┘
+                  ┌──────────────────────────────┐
+                  │            users             │
+                  ├──────────────────────────────┤
+                  │ id INT (PK, AI)              │
+                  │ name VARCHAR(255)            │
+                  │ email VARCHAR(255) (UNIQUE)  │
+                  │ password VARCHAR(255) (Hash) │
+                  │ role VARCHAR(50)             │
+                  └──────────────┬───────────────┘
+                                 │
+         ┌───────────────────────┴───────────────────────┐
+         │                                               │
+         ▼                                               ▼
+┌─────────────────────────────────┐     ┌─────────────────────────────────┐
+│            bookings             │     │       doctor_appointments       │
+├─────────────────────────────────┤     ├─────────────────────────────────┤
+│ id INT (PK, AI)                 │     │ id INT (PK, AI)                 │
+│ user_id INT (FK -> users)       │     │ user_id INT (FK -> users)       │
+│ patient_name VARCHAR(255)       │     │ doctor_id INT (FK -> doctors)   │
+│ phone VARCHAR(20)               │     │ doctor_name VARCHAR(255)        │
+│ pickup_location VARCHAR(255)    │     │ specialization VARCHAR(255)     │
+│ drop_location VARCHAR(255)      │     │ patient_name VARCHAR(255)       │
+│ emergency_type VARCHAR(100)     │     │ date DATE                       │
+│ status ENUM('pending'...)       │     │ time VARCHAR(50)                │
+│ assigned_ambulance_id INT (FK)  │     │ reason TEXT                     │
+│ assigned_driver_id INT (FK)     │     │ status VARCHAR(50)              │
+│ fare DECIMAL(10,2)              │     └─────────────────────────────────┘
+│ driver_rating INT               │
+└─────────────────────────────────┘
 
-┌──────────────────┐     ┌──────────────────────────┐
-│     doctors      │     │  doctor_appointments      │
-├──────────────────┤     ├──────────────────────────┤
-│ id (PK)          │     │ user_id (FK → users)      │
-│ name, degree     │     │ doctor_name, specialization│
-│ specialization   │     │ patient_name, date, time  │
-│ hospital, rating │     │ reason, status            │
-│ password (hash)  │     └──────────────────────────┘
-│ email, phone     │
-└──────────────────┘
+┌─────────────────────────────────┐     ┌─────────────────────────────────┐
+│            doctors              │     │             admins              │
+├─────────────────────────────────┤     ├─────────────────────────────────┤
+│ id INT (PK, AI)                 │     │ id INT (PK, AI)                 │
+│ name VARCHAR(255)               │     │ username VARCHAR(255)           │
+│ specialization VARCHAR(255)     │     │ email VARCHAR(255)              │
+│ degree VARCHAR(255)             │     │ password VARCHAR(255) (Hash)    │
+│ hospital VARCHAR(255)           │     └─────────────────────────────────┘
+│ rating FLOAT                    │
+│ email VARCHAR(255)              │
+│ password VARCHAR(255) (Hash)    │
+└─────────────────────────────────┘
 
-┌──────────────────┐
-│     admins       │
-├──────────────────┤
-│ id (PK)          │
-│ username, email  │
-│ password (hash)  │
-└──────────────────┘
+┌─────────────────────────────────┐     ┌─────────────────────────────────┐
+│           ambulances            │     │        ambulance_drivers        │
+├─────────────────────────────────┤     ├─────────────────────────────────┤
+│ id INT (PK, AI)                 │     │ id INT (PK, AI)                 │
+│ vehicle_number VARCHAR(50)      │     │ name VARCHAR(255)               │
+│ type VARCHAR(50)                │     │ phone VARCHAR(20)               │
+│ status ENUM('available'...)     │     │ email VARCHAR(255)              │
+│ driver_name VARCHAR(255)        │     │ password VARCHAR(255) (Hash)    │
+│ driver_phone VARCHAR(20)        │     │ status ENUM('available'...)     │
+└─────────────────────────────────┘     │ vehicle_id INT                  │
+                                        │ rating FLOAT (Avg)              │
+                                        │ total_ratings INT               │
+                                        │ total_trips INT                 │
+                                        │ total_earnings DECIMAL(10,2)    │
+                                        └─────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────┐
+│                   ambulance_tracking                   │
+├────────────────────────────────────────────────────────┤
+│ id INT (PK, AI)                                        │
+│ booking_id INT (FK -> bookings)                        │
+│ status ENUM('dispatched', 'en_route', 'arrived'...)    │
+│ latitude DECIMAL(9,6)                                  │
+│ longitude DECIMAL(9,6)                                 │
+│ last_updated TIMESTAMP                                 │
+└────────────────────────────────────────────────────────┘
 ```
 
 ---
 
+## 📝 License
 
-
-
+Distributed under the MIT License. See `LICENSE` for more information.
