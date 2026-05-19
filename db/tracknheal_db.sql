@@ -47,8 +47,10 @@ CREATE TABLE IF NOT EXISTS doctors (
 CREATE TABLE IF NOT EXISTS doctor_appointments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
+    doctor_id INT DEFAULT NULL,
     doctor_name VARCHAR(255) NOT NULL,
     specialization VARCHAR(255),
+    doctor_degree VARCHAR(100),
     patient_name VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
     email VARCHAR(255),
@@ -62,7 +64,8 @@ CREATE TABLE IF NOT EXISTS doctor_appointments (
         'cancelled'
     ) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL,
+    FOREIGN KEY (doctor_id) REFERENCES doctors (id) ON DELETE SET NULL
 );
 
 ALTER TABLE bookings
@@ -77,8 +80,7 @@ ALTER TABLE bookings ADD COLUMN user_id INT;
 
 ---- ADMIN CREDENTIALS ----
 INSERT INTO
-    admins (username, email, password)
-VALUES (
+    admins (username, email, password) VALUES (
         'admin',
         'admin@tracknheal.com',
         'admin123'
@@ -205,5 +207,159 @@ VALUES (
         'meena.krishnan@liver.com',
         'Mon-Fri',
         '9:00 AM - 4:00 PM',
-        4.8
-    );
+        4.8),
+
+('Dr. Sanjay Bose', 
+'Urologist', 
+'MBBS, MS, MCh', 
+'Apollo Hospitals', 
+'9876543210', 
+'sanjay.bose@tracknheal.com'
+, 'Mon-Fri', 
+'10:00 AM - 4:00 PM',
+ 4.6),
+
+('Dr. Pallavi Joshi', 
+'Urologist', 'MBBS, MS', 
+'Ruby General Hospital', 
+'9876543211', 
+'pallavi.joshi@tracknheal.com', 
+'Mon-Sat', 
+'9:00 AM - 5:00 PM', 
+4.3),
+
+('Dr. Arjun Malhotra', 
+'Vascular Surgeon', 
+'MBBS, MS, MCh', 
+'Fortis Hospital', 
+'9876543212', 
+'arjun.malhotra@tracknheal.com', 
+'Mon-Fri', 
+'11:00 AM - 6:00 PM', 
+4.5),
+
+('Dr. Ritu Kapoor', 
+'Vascular Surgeon', 
+'MBBS, MS', 
+'Medica Superspecialty', 
+'9876543213', 
+'ritu.kapoor@tracknheal.com', 
+'Tue-Sat', 
+'10:00 AM - 5:00 PM', 
+4.2),
+
+('Dr. Nikhil Sen', 
+'ENT Specialist', 
+'MBBS, MS (ENT)', 
+'AMRI Hospital', 
+'9876543214', 
+'nikhil.sen@tracknheal.com', 
+'Mon-Sat', 
+'9:00 AM - 3:00 PM', 
+4.7),
+
+('Dr. Swati Banerjee', 
+'ENT Specialist', 
+'MBBS, DLO', 
+'Belle Vue Clinic', 
+'9876543215', 
+'swati.banerjee@tracknheal.com', 
+'Mon-Fri', 
+'10:00 AM - 5:00 PM', 
+4.4),
+
+('Dr. Rakesh Verma', 
+'General Physician', 
+'MBBS, MD', 
+'Woodland Hospital', 
+'9876543216', 
+'rakesh.verma@tracknheal.com', 
+'Mon-Sat', 
+'8:00 AM - 4:00 PM', 
+4.4),
+
+('Dr. Pooja Chatterjee', 
+'Hepatologist', 
+'MBBS, MD, DM', 
+'SSKM Hospital', 
+'9876543217', 
+'pooja.chatterjee@tracknheal.com', 
+'Mon-Fri', 
+'10:00 AM - 6:00 PM', 
+4.5),
+
+('Dr. Rohan Ghosh', 
+'Dermatologist', 
+'MBBS, MD, DDVL', 
+'Columbia Asia Hospital', 
+'9876543218', 
+'rohan.ghosh@tracknheal.com', 
+'Tue-Sat', 
+'11:00 AM - 7:00 PM', 
+4.3) 
+;
+
+
+    CREATE TABLE IF NOT EXISTS ambulance_tracking (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            booking_id INT NOT NULL,
+            ambulance_lat DOUBLE NOT NULL,
+            ambulance_lng DOUBLE NOT NULL,
+            pickup_lat DOUBLE NOT NULL,
+            pickup_lng DOUBLE NOT NULL,
+            drop_lat DOUBLE DEFAULT NULL,
+            drop_lng DOUBLE DEFAULT NULL,
+            route_coords JSON,
+            drop_route_coords JSON,
+            current_step INT DEFAULT 0,
+            total_steps INT DEFAULT 0,
+            phase ENUM('to_pickup', 'to_hospital') DEFAULT 'to_pickup',
+            status ENUM('dispatched', 'en_route', 'arrived', 'dropping', 'completed') DEFAULT 'dispatched',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
+        );
+
+----- Ambulance Fleet -----
+CREATE TABLE IF NOT EXISTS ambulances (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    vehicle_id VARCHAR(20) NOT NULL UNIQUE,
+    plate_number VARCHAR(30) NOT NULL,
+    ambulance_type ENUM('ALS', 'BLS', 'PALS', 'MICU') DEFAULT 'BLS',
+    equipment VARCHAR(100) DEFAULT 'Basic Life Support',
+    status ENUM('available', 'on-duty', 'maintenance', 'retired') DEFAULT 'available',
+    area VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+----- Notifications -----
+CREATE TABLE IF NOT EXISTS notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    booking_id INT DEFAULT NULL,
+    type VARCHAR(50) DEFAULT 'general',
+    title VARCHAR(255) NOT NULL,
+    message TEXT,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+----- Ambulance Drivers -----
+CREATE TABLE IF NOT EXISTS ambulance_drivers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) DEFAULT NULL,
+    license_number VARCHAR(50) DEFAULT NULL,
+    status ENUM('available', 'on_duty', 'offline') DEFAULT 'available',
+    assigned_ambulance_id INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+----- Add assignment columns to bookings (run if not present) -----
+ALTER TABLE bookings ADD COLUMN assigned_ambulance_id INT DEFAULT NULL;
+ALTER TABLE bookings ADD COLUMN assigned_driver_id INT DEFAULT NULL;

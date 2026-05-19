@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Driver Login - TrackNHeal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TrackNHeal Ambulance Driver Portal - Login to manage rides and dispatches">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/driver-login.css">
+</head>
+
+<body>
+    <div class="bg-gradient"></div>
+    <div class="bg-pattern"></div>
+
+    <!-- HEADER -->
+    <header class="dl-header">
+        <a href="/" class="dl-logo">
+            <img src="../assets/website-logo.jpeg" alt="TrackNHeal">
+            <span>TrackNHeal</span>
+        </a>
+        <a href="/" class="dl-back">← Back to Home</a>
+    </header>
+
+    <!-- MAIN CARD -->
+    <main class="dl-main">
+        <div class="dl-card">
+            <div class="dl-card-glow"></div>
+
+            <div class="dl-icon">🚑</div>
+            <h1 id="formTitle">Driver Login</h1>
+            <p id="formSubtitle" class="dl-subtitle">Access your ambulance dashboard</p>
+
+            <div id="formMessage" class="dl-msg"></div>
+
+            <!-- LOGIN FORM -->
+            <div id="loginFields">
+                <div class="dl-field">
+                    <label>Email Address</label>
+                    <div class="dl-input-wrap">
+                        <span class="dl-input-icon">📧</span>
+                        <input type="email" id="loginEmail" placeholder="driver@tracknheal.com" required>
+                    </div>
+                </div>
+                <div class="dl-field">
+                    <label>Password</label>
+                    <div class="dl-input-wrap">
+                        <span class="dl-input-icon">🔒</span>
+                        <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                    </div>
+                </div>
+                <button class="dl-submit" id="loginBtn" onclick="handleDriverLogin()">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-icon">→</span>
+                </button>
+                <div class="dl-toggle">
+                    New driver? <a onclick="toggleForm(true)">Create Account</a>
+                </div>
+            </div>
+
+            <!-- SIGNUP FORM -->
+            <div id="signupFields" style="display:none;">
+                <div class="dl-field">
+                    <label>Full Name</label>
+                    <div class="dl-input-wrap">
+                        <span class="dl-input-icon">👤</span>
+                        <input type="text" id="signupName" placeholder="John Doe" required>
+                    </div>
+                </div>
+                <div class="dl-field">
+                    <label>Email Address</label>
+                    <div class="dl-input-wrap">
+                        <span class="dl-input-icon">📧</span>
+                        <input type="email" id="signupEmail" placeholder="driver@tracknheal.com" required>
+                    </div>
+                </div>
+                <div class="dl-field">
+                    <label>Password</label>
+                    <div class="dl-input-wrap">
+                        <span class="dl-input-icon">🔒</span>
+                        <input type="password" id="signupPassword" placeholder="Create a password" required>
+                    </div>
+                </div>
+                <div class="dl-field-row">
+                    <div class="dl-field">
+                        <label>Phone</label>
+                        <div class="dl-input-wrap">
+                            <span class="dl-input-icon">📱</span>
+                            <input type="tel" id="signupPhone" placeholder="9876543210">
+                        </div>
+                    </div>
+                    <div class="dl-field">
+                        <label>License Number</label>
+                        <div class="dl-input-wrap">
+                            <span class="dl-input-icon">🪪</span>
+                            <input type="text" id="signupLicense" placeholder="DL-12345">
+                        </div>
+                    </div>
+                </div>
+                <div class="dl-divider"><span>Ambulance Details</span></div>
+                <div class="dl-field-row">
+                    <div class="dl-field">
+                        <label>Vehicle ID *</label>
+                        <div class="dl-input-wrap">
+                            <span class="dl-input-icon">🚑</span>
+                            <input type="text" id="signupVehicleId" placeholder="AMB-007" required>
+                        </div>
+                    </div>
+                    <div class="dl-field">
+                        <label>Plate Number *</label>
+                        <div class="dl-input-wrap">
+                            <span class="dl-input-icon">🏣</span>
+                            <input type="text" id="signupPlate" placeholder="WB-01-AE-1234" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="dl-field">
+                    <label>Ambulance Type</label>
+                    <div class="dl-input-wrap">
+                        <span class="dl-input-icon">⚕️</span>
+                        <select id="signupAmbType" style="flex:1;background:none;border:none;outline:none;padding:13px 14px 13px 8px;color:#fff;font-size:0.95em;font-family:inherit;min-width:0;width:100%;">
+                            <option value="BLS" style="background:#1a1e2e;">BLS — Basic Life Support</option>
+                            <option value="ALS" style="background:#1a1e2e;">ALS — Advanced Life Support</option>
+                            <option value="PALS" style="background:#1a1e2e;">PALS — Pediatric ALS</option>
+                            <option value="MICU" style="background:#1a1e2e;">MICU — Mobile ICU</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="dl-submit signup" id="signupBtn" onclick="handleDriverSignup()">
+                    <span class="btn-text">Create Account</span>
+                    <span class="btn-icon">→</span>
+                </button>
+                <div class="dl-toggle">
+                    Already have an account? <a onclick="toggleForm(false)">Sign In</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Check if driver already logged in
+        window.onload = function () {
+            const driver = sessionStorage.getItem('driverUser');
+            if (driver) window.location.href = 'driver-dashboard.html';
+        };
+
+        function toggleForm(showSignup) {
+            document.getElementById('loginFields').style.display = showSignup ? 'none' : 'block';
+            document.getElementById('signupFields').style.display = showSignup ? 'block' : 'none';
+            document.getElementById('formTitle').textContent = showSignup ? 'Driver Registration' : 'Driver Login';
+            document.getElementById('formSubtitle').textContent = showSignup ? 'Join the TrackNHeal driver network' : 'Access your ambulance dashboard';
+            clearMsg();
+        }
+
+        function showMsg(text, type) {
+            const el = document.getElementById('formMessage');
+            el.innerHTML = text;
+            el.className = 'dl-msg ' + type;
+        }
+        function clearMsg() {
+            const el = document.getElementById('formMessage');
+            el.className = 'dl-msg';
+            el.innerHTML = '';
+        }
+
+        async function handleDriverLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            if (!email || !password) { showMsg('⚠️ Please fill in all fields', 'error'); return; }
+
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.querySelector('.btn-text').textContent = 'Signing in...';
+
+            try {
+                const res = await fetch('/driver/login', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showMsg('✅ Login successful! Redirecting...', 'success');
+                    sessionStorage.setItem('driverUser', JSON.stringify({
+                        id: data.driverId, name: data.driverName, email: data.email, status: data.status
+                    }));
+                    setTimeout(() => { window.location.href = 'driver-dashboard.html'; }, 800);
+                } else {
+                    showMsg('❌ ' + data.message, 'error');
+                    btn.disabled = false;
+                    btn.querySelector('.btn-text').textContent = 'Sign In';
+                }
+            } catch (e) {
+                showMsg('❌ Network error. Please try again.', 'error');
+                btn.disabled = false;
+                btn.querySelector('.btn-text').textContent = 'Sign In';
+            }
+        }
+
+        async function handleDriverSignup() {
+            const name = document.getElementById('signupName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const phone = document.getElementById('signupPhone').value.trim();
+            const licenseNumber = document.getElementById('signupLicense').value.trim();
+            const vehicleId = document.getElementById('signupVehicleId').value.trim();
+            const plateNumber = document.getElementById('signupPlate').value.trim();
+            const ambulanceType = document.getElementById('signupAmbType').value;
+
+            if (!name || !email || !password || !vehicleId || !plateNumber) {
+                showMsg('⚠️ Name, email, password, vehicle ID and plate number are required', 'error'); return;
+            }
+
+            const btn = document.getElementById('signupBtn');
+            btn.disabled = true;
+            btn.querySelector('.btn-text').textContent = 'Creating account...';
+
+            try {
+                const res = await fetch('/driver/signup', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, phone, licenseNumber, vehicleId, plateNumber, ambulanceType })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showMsg('✅ Account created! You can now sign in.', 'success');
+                    setTimeout(() => toggleForm(false), 1500);
+                } else {
+                    showMsg('❌ ' + data.message, 'error');
+                }
+            } catch (e) {
+                showMsg('❌ Network error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.querySelector('.btn-text').textContent = 'Create Account';
+            }
+        }
+
+        // Enter key support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (document.getElementById('loginFields').style.display !== 'none') handleDriverLogin();
+                else handleDriverSignup();
+            }
+        });
+    </script>
+</body>
+
+</html>

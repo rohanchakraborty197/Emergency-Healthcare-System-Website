@@ -1,0 +1,183 @@
+/* ========== DRIVER DASHBOARD CSS ========== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0e1a;
+    color: #e0e0e0;
+    min-height: 100vh;
+}
+
+/* HEADER */
+.dd-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 30px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 100;
+}
+
+.dd-header-left {
+    display: flex; align-items: center; gap: 12px;
+}
+.dd-header-left img { height: 34px; border-radius: 6px; }
+.dd-header-left h1 { font-size: 1.2em; font-weight: 700; color: #fff; }
+
+.dd-header-right {
+    display: flex; align-items: center; gap: 16px;
+}
+
+.dd-status-toggle {
+    display: flex; gap: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px; padding: 3px;
+}
+.status-opt {
+    padding: 6px 14px; border: none; border-radius: 8px;
+    background: transparent; color: rgba(255,255,255,0.4);
+    font-size: 0.78em; font-weight: 600; cursor: pointer;
+    transition: all 0.3s; font-family: inherit;
+}
+.status-opt.active.available { background: rgba(46,213,115,0.2); color: #2ed573; }
+.status-opt.active.on_duty { background: rgba(231,76,60,0.2); color: #e74c3c; }
+.status-opt.active.offline { background: rgba(149,165,166,0.2); color: #95a5a6; }
+
+.dd-driver-name {
+    font-weight: 600; color: rgba(255,255,255,0.7); font-size: 0.9em;
+}
+
+.dd-logout {
+    padding: 8px 18px; border: 1px solid rgba(231,76,60,0.4);
+    background: transparent; color: #e74c3c; border-radius: 8px;
+    cursor: pointer; font-weight: 600; font-size: 0.85em;
+    transition: all 0.3s; font-family: inherit;
+}
+.dd-logout:hover { background: rgba(231,76,60,0.15); }
+
+/* STATS */
+.dd-stats {
+    display: flex; gap: 20px; padding: 25px 30px;
+    max-width: 900px; margin: 0 auto;
+}
+.stat-card {
+    flex: 1; text-align: center;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px; padding: 24px 16px;
+    transition: transform 0.3s;
+}
+.stat-card:hover { transform: translateY(-3px); }
+.stat-card.active-card { border-color: rgba(231,76,60,0.3); background: rgba(231,76,60,0.05); }
+.stat-icon { font-size: 1.8em; margin-bottom: 8px; }
+.stat-num { font-size: 2em; font-weight: 800; color: #fff; }
+.stat-label { font-size: 0.8em; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+/* MAIN */
+.dd-main { padding: 0 30px 40px; max-width: 1100px; margin: 0 auto; }
+
+.dd-section { margin-bottom: 30px; }
+.dd-section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+}
+.dd-section-head h2 {
+    font-size: 1.15em; font-weight: 700; color: #fff;
+}
+
+.dd-refresh {
+    padding: 8px 16px; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.6);
+    border-radius: 8px; cursor: pointer; font-size: 0.82em;
+    transition: all 0.3s; font-family: inherit;
+}
+.dd-refresh:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+/* RIDES GRID */
+.dd-rides-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.dd-empty {
+    grid-column: 1 / -1; text-align: center;
+    padding: 50px; color: rgba(255,255,255,0.3);
+}
+.dd-empty .icon { font-size: 2.5em; margin-bottom: 10px; opacity: 0.5; }
+.dd-empty p { font-size: 0.9em; }
+
+/* RIDE CARD */
+.ride-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px; padding: 20px;
+    transition: all 0.3s; animation: cardSlide 0.4s ease;
+}
+.ride-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+.ride-card.my-ride { border-color: rgba(231,76,60,0.3); background: rgba(231,76,60,0.03); }
+.ride-card.history-card { opacity: 0.7; }
+
+@keyframes cardSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.ride-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+}
+.ride-id { font-weight: 700; font-size: 1.05em; color: #fff; }
+.ride-type {
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 0.75em; font-weight: 600; text-transform: uppercase;
+}
+
+.ride-info { display: flex; flex-direction: column; gap: 6px; font-size: 0.88em; }
+.ride-info .label { color: rgba(255,255,255,0.4); }
+.ride-info strong { color: #fff; }
+
+.ride-status-bar { margin-top: 12px; }
+.ride-status {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 0.75em; font-weight: 600; text-transform: uppercase;
+}
+.ride-status.pending { background: rgba(243,156,18,0.15); color: #f39c12; }
+.ride-status.dispatched { background: rgba(52,152,219,0.15); color: #3498db; }
+.ride-status.completed { background: rgba(46,213,115,0.15); color: #2ed573; }
+.ride-status.cancelled { background: rgba(149,165,166,0.15); color: #95a5a6; }
+
+/* RIDE ACTIONS */
+.ride-actions {
+    display: flex; gap: 8px; margin-top: 14px;
+    padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.ride-btn {
+    flex: 1; padding: 10px; border: none; border-radius: 10px;
+    font-size: 0.85em; font-weight: 600; cursor: pointer;
+    transition: all 0.3s; font-family: inherit; text-align: center;
+    text-decoration: none; display: inline-block;
+}
+.ride-btn.accept {
+    background: linear-gradient(135deg, #2ed573, #27ae60); color: #fff;
+}
+.ride-btn.accept:hover { box-shadow: 0 4px 15px rgba(46,213,115,0.4); transform: translateY(-1px); }
+.ride-btn.track {
+    background: rgba(52,152,219,0.15); color: #3498db; border: 1px solid rgba(52,152,219,0.3);
+}
+.ride-btn.track:hover { background: rgba(52,152,219,0.25); }
+.ride-btn.complete {
+    background: rgba(46,213,115,0.15); color: #2ed573; border: 1px solid rgba(46,213,115,0.3);
+}
+.ride-btn.complete:hover { background: rgba(46,213,115,0.25); }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .dd-header { flex-direction: column; gap: 12px; padding: 12px 16px; }
+    .dd-header-right { flex-wrap: wrap; justify-content: center; }
+    .dd-stats { flex-direction: column; padding: 16px; }
+    .dd-main { padding: 0 16px 30px; }
+    .dd-rides-grid { grid-template-columns: 1fr; }
+}
