@@ -1,12 +1,12 @@
 CREATE TABLE users (
-    id INT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE admins (
-    id INT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
@@ -14,20 +14,20 @@ CREATE TABLE admins (
 );
 
 CREATE TABLE bookings (
-    id INT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
     patient_name VARCHAR(255) NOT NULL,
     phone VARCHAR(50) NOT NULL,
     pickup_location VARCHAR(255) NOT NULL,
     drop_location VARCHAR(255) NOT NULL,
     emergency_type VARCHAR(100) NOT NULL,
-    notes CLOB,
-    status VARCHAR(20) DEFAULT 'pending',
+    notes TEXT,
+    status ENUM('pending', 'dispatched', 'completed', 'cancelled') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
------ Hospital database -----
+# Hospital database
 CREATE TABLE IF NOT EXISTS hospitals (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
@@ -35,10 +35,12 @@ CREATE TABLE IF NOT EXISTS hospitals (
     password VARCHAR(255) NOT NULL,
     address TEXT,
     phone VARCHAR(20),
+    total_beds INT DEFAULT 0,
+    available_beds INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
------ Doctor database -----
+# Doctor database
 CREATE TABLE IF NOT EXISTS doctors (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -79,17 +81,9 @@ CREATE TABLE IF NOT EXISTS doctor_appointments (
     FOREIGN KEY (doctor_id) REFERENCES doctors (id) ON DELETE SET NULL
 );
 
-ALTER TABLE bookings
-ADD COLUMN status ENUM(
-    'pending',
-    'dispatched',
-    'completed',
-    'cancelled'
-) DEFAULT 'pending';
 
-ALTER TABLE bookings ADD COLUMN user_id INT;
 
----- ADMIN CREDENTIALS ----
+# ADMIN CREDENTIALS
 INSERT INTO
     admins (username, email, password) VALUES (
         'admin',
@@ -97,7 +91,7 @@ INSERT INTO
         'admin123'
     );
 
-------- SAMPLE DOCTOR DETAILS -------
+# SAMPLE DOCTOR DETAILS
 INSERT INTO
     doctors (
         name,
@@ -331,7 +325,7 @@ VALUES (
             FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
         );
 
------ Ambulance Fleet -----
+# Ambulance Fleet -----
 CREATE TABLE IF NOT EXISTS ambulances (
     id INT AUTO_INCREMENT PRIMARY KEY,
     vehicle_id VARCHAR(20) NOT NULL UNIQUE,
@@ -344,7 +338,7 @@ CREATE TABLE IF NOT EXISTS ambulances (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
------ Notifications -----
+# Notifications -----
 CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
@@ -357,7 +351,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
------ Ambulance Drivers -----
+# Ambulance Drivers -----
 CREATE TABLE IF NOT EXISTS ambulance_drivers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -371,13 +365,13 @@ CREATE TABLE IF NOT EXISTS ambulance_drivers (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
------ Add assignment columns to bookings (run if not present) -----
+# Add assignment columns to bookings (run if not present) -----
 ALTER TABLE bookings ADD COLUMN assigned_ambulance_id INT DEFAULT NULL;
 ALTER TABLE bookings ADD COLUMN assigned_driver_id INT DEFAULT NULL;
 ALTER TABLE bookings ADD COLUMN fare DECIMAL(10,2) DEFAULT 0.00;
 ALTER TABLE bookings ADD COLUMN driver_rating INT DEFAULT NULL;
 
------ Update bookings status ENUM to include all valid states -----
+# Update bookings status ENUM to include all valid states -----
 ALTER TABLE bookings MODIFY COLUMN status ENUM(
     'pending',
     'dispatched',
@@ -385,20 +379,20 @@ ALTER TABLE bookings MODIFY COLUMN status ENUM(
     'cancelled'
 ) DEFAULT 'pending';
 
------ Add driver info columns to ambulances (run if not present) -----
+# Add driver info columns to ambulances (run if not present) -----
 ALTER TABLE ambulances ADD COLUMN driver_name VARCHAR(255) DEFAULT NULL;
 ALTER TABLE ambulances ADD COLUMN driver_phone VARCHAR(20) DEFAULT NULL;
 
------ Add analytics columns to ambulance_drivers (run if not present) -----
+# Add analytics columns to ambulance_drivers (run if not present) -----
 ALTER TABLE ambulance_drivers ADD COLUMN rating FLOAT DEFAULT 5.0;
 ALTER TABLE ambulance_drivers ADD COLUMN total_ratings INT DEFAULT 0;
 ALTER TABLE ambulance_drivers ADD COLUMN total_trips INT DEFAULT 0;
 ALTER TABLE ambulance_drivers ADD COLUMN total_earnings DECIMAL(10,2) DEFAULT 0.00;
 
------ Add doctor_id FK constraint to doctor_appointments (run if not present) -----
+# Add doctor_id FK constraint to doctor_appointments (run if not present) -----
 ALTER TABLE doctor_appointments ADD CONSTRAINT fk_doc_id FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE SET NULL;
 
------ Update ambulance_tracking status ENUM to include all valid states -----
+# Update ambulance_tracking status ENUM to include all valid states -----
 ALTER TABLE ambulance_tracking MODIFY COLUMN status ENUM(
     'dispatched',
     'en_route',
@@ -408,17 +402,8 @@ ALTER TABLE ambulance_tracking MODIFY COLUMN status ENUM(
 ) DEFAULT 'dispatched';
 
 
-CREATE TABLE IF NOT EXISTS hospitals (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    address TEXT,
-    phone VARCHAR(20),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
-------- SAMPLE HOSPITAL DETAILS -------
+# SAMPLE HOSPITAL DETAILS -------
 INSERT INTO hospitals (name, email, password, address, phone, total_beds, available_beds) VALUES
 ('City General Hospital', 'citygeneralhospital@hospital.com', '$2b$10$KzotcZAyuTOlf9QmAwHG2ONReFzXryHLoHz8dC7CFxp0J20IPhay6', 'City General Hospital Campus, City Center', '9887482345', 241, 27),
 ('Skin Care Clinic', 'skincareclinic@hospital.com', '$2b$10$KzotcZAyuTOlf9QmAwHG2ONReFzXryHLoHz8dC7CFxp0J20IPhay6', 'Skin Care Clinic Campus, City Center', '9835846329', 87, 34),
@@ -442,7 +427,7 @@ INSERT INTO hospitals (name, email, password, address, phone, total_beds, availa
 ('Columbia Asia Hospital', 'columbiaasiahospital@hospital.com', '$2b$10$KzotcZAyuTOlf9QmAwHG2ONReFzXryHLoHz8dC7CFxp0J20IPhay6', 'Columbia Asia Hospital Campus, City Center', '9888683943', 210, 100),
 ('NRS Hospital', 'nrshospital@hospital.com', '$2b$10$KzotcZAyuTOlf9QmAwHG2ONReFzXryHLoHz8dC7CFxp0J20IPhay6', 'NRS Hospital Campus, City Center', '9875755132', 116, 31);
 
-------- AUTO-SEEDED DOCTORS -------
+# AUTO-SEEDED DOCTORS -------
 INSERT INTO doctors (name, specialization, degree, hospital, phone, email, available_days, available_time, rating, password) VALUES
 ('Dr. Priya Sen', 'General Physician', 'MBBS, MD', 'AMRI Hospital', '9574751060', 'drpriyasen@hospital.com', 'Tue-Sun', '11:00 AM - 7:00 PM', 4.1, '$2b$10$CfQtv0eps./SvMboex7./eN6ZFMJXBjTv8RLCPi7PfLN76m/6yDy.'),
 ('Dr. Anita Nair', 'Gastroenterologist', 'MBBS, DDVL', 'AMRI Hospital', '9859350015', 'dranitanair@hospital.com', 'Wed-Sat', '11:00 AM - 7:00 PM', 4.0, '$2b$10$CfQtv0eps./SvMboex7./eN6ZFMJXBjTv8RLCPi7PfLN76m/6yDy.'),

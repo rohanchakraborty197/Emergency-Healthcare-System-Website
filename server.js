@@ -114,13 +114,23 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (Nginx) — required for correct IP detection behind reverse proxy
+
 const server = http.createServer(app);
-const io = new SocketIOServer(server, { cors: { origin: "*" } });
+
+// CORS origins: configurable via env var, defaults to allow all for local dev
+const ALLOWED_ORIGINS = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',')
+    : process.env.NODE_ENV === 'production'
+        ? ["https://tracknheal.me", "https://www.tracknheal.me"]
+        : ["*"];
+
+const io = new SocketIOServer(server, { cors: { origin: ALLOWED_ORIGINS } });
 
 // Store active tracking simulations
 const activeSimulations = new Map();
 
-app.use(cors());
+app.use(cors({ origin: ALLOWED_ORIGINS }));
 app.use(express.json());
 
 // ✅ Serve static files from public folder
@@ -2485,8 +2495,12 @@ Guidelines:
 3. If no matching doctor is found, say we currently don't have a specialist for that in our database but they should still seek medical attention.`
             };
 
-            const lmStudioPayload = {
-                model: "local-model", // LM Studio usually ignores this for local models
+            // LLM endpoint: defaults to LM Studio (local dev), configurable for Ollama (production VPS)
+            const LLM_URL = process.env.LLM_URL || "http://127.0.0.1:1234/v1/chat/completions";
+            const LLM_MODEL = process.env.LLM_MODEL || "local-model";
+
+            const llmPayload = {
+                model: LLM_MODEL,
                 messages: [systemPrompt, ...messages],
                 temperature: 0.7,
                 max_tokens: 150,
@@ -2494,24 +2508,29 @@ Guidelines:
             };
 
             try {
-                // Call LM Studio local server
-                const response = await fetch("http://127.0.0.1:1234/v1/chat/completions", {
+                const headers = {
+                    "Content-Type": "application/json"
+                };
+                if (process.env.LLM_API_KEY) {
+                    headers["Authorization"] = `Bearer ${process.env.LLM_API_KEY}`;
+                }
+
+                // Call LLM server
+                const response = await fetch(LLM_URL, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(lmStudioPayload)
+                    headers: headers,
+                    body: JSON.stringify(llmPayload)
                 });
 
                 if (!response.ok) {
-                    throw new Error(`LM Studio API error! status: ${response.status}`);
+                    throw new Error(`LLM API error! status: ${response.status}`);
                 }
 
                 const data = await response.json();
                 res.json(data);
             } catch (fetchErr) {
-                console.error("Error connecting to LM Studio:", fetchErr);
-                res.status(500).json({ error: "Could not connect to the AI model. Please ensure LM Studio is running on port 1234." });
+                console.error("Error connecting to LLM:", fetchErr);
+                res.status(500).json({ error: "Could not connect to the AI model. Please ensure the LLM server is running." });
             }
         });
     } catch (e) {
