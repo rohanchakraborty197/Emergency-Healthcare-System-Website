@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hospital Login - TrackNHeal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TrackNHeal Hospital Portal - Login to manage doctors and appointments">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/driver-login.css">
+    <link rel="stylesheet" href="../css/hospital-login.css">
+</head>
+
+<body>
+    <div class="bg-gradient"></div>
+    <div class="bg-pattern"></div>
+
+    <!-- HEADER -->
+    <header class="dl-header">
+        <a href="/" class="dl-logo">
+            <img src="../assets/website-logo.jpeg" alt="TrackNHeal">
+            <span>TrackNHeal</span>
+        </a>
+        <a href="/" class="dl-back">← Back to Home</a>
+    </header>
+
+    <!-- MAIN CARD -->
+    <main class="dl-main">
+        <div class="dl-card">
+            <div class="dl-card-glow"></div>
+
+            <div class="dl-icon">🏥</div>
+            <h1 id="formTitle">Hospital Portal</h1>
+            <p id="formSubtitle" class="dl-subtitle">Access your hospital dashboard</p>
+
+            <div id="formMessage" class="dl-msg"></div>
+
+            <!-- LOGIN FORM -->
+            <div id="loginFields">
+                <div class="dl-field">
+                    <label>Email Address</label>
+                    <div class="dl-input-wrap">
+                        <span class="dl-input-icon">📧</span>
+                        <input type="email" id="loginEmail" placeholder="hospital@tracknheal.com" required>
+                    </div>
+                </div>
+                <div class="dl-field">
+                    <label>Password</label>
+                    <div class="dl-input-wrap">
+                        <span class="dl-input-icon">🔒</span>
+                        <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                    </div>
+                </div>
+                <button class="dl-submit" id="loginBtn" onclick="handleHospitalLogin()">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-icon">→</span>
+                </button>
+                <div class="dl-toggle">
+                    New hospital? <a onclick="toggleForm(true)">Register Hospital</a>
+                </div>
+            </div>
+
+            <!-- SIGNUP FORM -->
+            <div id="signupFields" style="display:none;">
+                <div class="dl-field">
+                    <label>Hospital Name *</label>
+                    <div class="dl-input-wrap">
+                        <span class="dl-input-icon">🏥</span>
+                        <input type="text" id="signupName" placeholder="E.g., City General Hospital" required>
+                    </div>
+                </div>
+                <div class="dl-field">
+                    <label>Email Address *</label>
+                    <div class="dl-input-wrap">
+                        <span class="dl-input-icon">📧</span>
+                        <input type="email" id="signupEmail" placeholder="admin@hospital.com" required>
+                    </div>
+                </div>
+                <div class="dl-field">
+                    <label>Password *</label>
+                    <div class="dl-input-wrap">
+                        <span class="dl-input-icon">🔒</span>
+                        <input type="password" id="signupPassword" placeholder="Create a strong password" required>
+                    </div>
+                </div>
+                <div class="dl-field">
+                    <label>Address</label>
+                    <div class="dl-input-wrap">
+                        <span class="dl-input-icon">📍</span>
+                        <input type="text" id="signupAddress" placeholder="Hospital Address">
+                    </div>
+                </div>
+                <div class="dl-field">
+                    <label>Contact Phone</label>
+                    <div class="dl-input-wrap">
+                        <span class="dl-input-icon">📞</span>
+                        <input type="text" id="signupPhone" placeholder="Phone Number">
+                    </div>
+                </div>
+                <button class="dl-submit signup" id="signupBtn" onclick="handleHospitalSignup()">
+                    <span class="btn-text">Register Hospital</span>
+                    <span class="btn-icon">→</span>
+                </button>
+                <div class="dl-toggle">
+                    Already registered? <a onclick="toggleForm(false)">Sign In</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/hospital-login.js"></script>
+</body>
+
+</html>

@@ -1,205 +1,117 @@
 import "dotenv/config";
 import express from "express";
 import mysql from "mysql2";
-import fs from "fs";
 import cors from "cors";
-import bodyParser from "body-parser";
 import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcrypt";
 import { Server as SocketIOServer } from "socket.io";
-import { GoogleGenAI } from "@google/genai";
+
+import nodemailer from "nodemailer";
 
 const SALT_ROUNDS = 10; // Cost factor for bcrypt hashing
 
 // Default dispatch origin for ambulance (TrackNHeal HQ - Kolkata)
 const DISPATCH_ORIGIN = { lat: 22.5726, lng: 88.3639 };
 
+// ✅ OTP INFRASTRUCTURE
+// In-memory OTP store: email → { otp, expiresAt, context, userData }
+const otpStore = new Map();
+const OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+
+// Gmail SMTP transporter for sending OTP emails
+const emailTransporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
+// Verify email transporter on startup
+emailTransporter.verify((err) => {
+    if (err) {
+        console.error("⚠️ Email transporter error (OTP emails won't work):", err.message);
+    } else {
+        console.log("✅ Email transporter ready for OTP emails");
+    }
+});
+
+// Generate a random 6-digit OTP
+function generateOTP() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Send OTP email with styled HTML template
+async function sendOTPEmail(email, otp, userName) {
+    const mailOptions = {
+        from: `"TracknHeal" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: `🔐 Your TracknHeal Verification Code: ${otp}`,
+        html: `
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+                <div style="background: linear-gradient(135deg, #e74c3c, #c0392b); padding: 32px 24px; text-align: center;">
+                    <h1 style="color: #fff; margin: 0; font-size: 24px; letter-spacing: 0.5px;">🚑 TracknHeal</h1>
+                    <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;">Email Verification</p>
+                </div>
+                <div style="padding: 32px 24px; text-align: center;">
+                    <p style="color: #333; font-size: 16px; margin: 0 0 8px;">Hello${userName ? ', <strong>' + userName + '</strong>' : ''}!</p>
+                    <p style="color: #666; font-size: 14px; margin: 0 0 24px;">Use the code below to verify your identity:</p>
+                    <div style="background: #f8f9fa; border: 2px dashed #e74c3c; border-radius: 12px; padding: 20px; margin: 0 auto 24px; display: inline-block;">
+                        <span style="font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #e74c3c; font-family: 'Courier New', monospace;">${otp}</span>
+                    </div>
+                    <p style="color: #999; font-size: 13px; margin: 0;">This code expires in <strong>5 minutes</strong>.</p>
+                    <p style="color: #999; font-size: 13px; margin: 4px 0 0;">If you didn't request this, please ignore this email.</p>
+                </div>
+                <div style="background: #f8f9fa; padding: 16px 24px; text-align: center; border-top: 1px solid #eee;">
+                    <p style="color: #aaa; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} TracknHeal Ambulance Service</p>
+                </div>
+            </div>
+        `
+    };
+    try {
+        await emailTransporter.sendMail(mailOptions);
+        
+        // Log to notifications table (using existing schema)
+        const logQuery = `INSERT INTO notifications (user_id, booking_id, type, title, message, is_read) VALUES (?, ?, ?, ?, ?, ?)`;
+        const logValues = [null, null, 'EMAIL', 'OTP Verification', `Sent OTP verification email to ${email} (status: sent)`, 0];
+        db.query(logQuery, logValues, (err) => {
+            if (err) console.error("Error logging notification:", err.message);
+        });
+    } catch (error) {
+        // Log failure to notifications table
+        const logQuery = `INSERT INTO notifications (user_id, booking_id, type, title, message, is_read) VALUES (?, ?, ?, ?, ?, ?)`;
+        const logValues = [null, null, 'EMAIL', 'OTP Verification', `Failed to send OTP verification email to ${email} (status: failed)`, 0];
+        db.query(logQuery, logValues, () => {});
+        throw error;
+    }
+}
+
+// Store OTP for an email
+function storeOTP(email, otp, context, userData = null) {
+    otpStore.set(email.toLowerCase(), {
+        otp,
+        expiresAt: Date.now() + OTP_EXPIRY_MS,
+        context, // 'login' or 'signup'
+        userData // For signup: { name, email, hashedPassword }
+    });
+}
+
+// Verify OTP for an email
+function verifyOTP(email, otp) {
+    const entry = otpStore.get(email.toLowerCase());
+    if (!entry) return { valid: false, reason: 'No OTP found. Please request a new one.' };
+    if (Date.now() > entry.expiresAt) {
+        otpStore.delete(email.toLowerCase());
+        return { valid: false, reason: 'OTP has expired. Please request a new one.' };
+    }
+    if (entry.otp !== otp) return { valid: false, reason: 'Invalid OTP. Please try again.' };
+    return { valid: true, context: entry.context, userData: entry.userData };
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// ✅ Gemini AI Setup
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-// Load medical reference data from ML model folder
-const diseaseInfo = JSON.parse(
-    fs.readFileSync(path.join(__dirname, "disease_info.json"), "utf-8")
-);
-
-// Build a disease reference string for the system prompt
-const diseaseReference = Object.entries(diseaseInfo).map(([name, info]) =>
-    `- ${name} (severity: ${info.severity})`
-).join("\n");
-
-// Disease → Specialist mapping (used for doctor DB queries)
-const specialistMap = {
-    'Heart Attack': 'Cardiologist',
-    'Bronchial Asthma': 'Pulmonologist',
-    'Hypertension ': 'Cardiologist',
-    'Migraine': 'Neurologist',
-    'Cervical spondylosis': 'Neurologist',
-    'Paralysis (brain hemorrhage)': 'Neurologist',
-    'Jaundice': 'Gastroenterologist',
-    'Malaria': 'General Physician',
-    'Chicken pox': 'General Physician',
-    'Dengue': 'General Physician',
-    'Typhoid': 'General Physician',
-    'hepatitis A': 'Hepatologist',
-    'Hepatitis B': 'Hepatologist',
-    'Hepatitis C': 'Hepatologist',
-    'Hepatitis D': 'Hepatologist',
-    'Hepatitis E': 'Hepatologist',
-    'Alcoholic hepatitis': 'Hepatologist',
-    'Tuberculosis': 'Pulmonologist',
-    'Common Cold': 'General Physician',
-    'Pneumonia': 'Pulmonologist',
-    'Dimorphic hemmorhoids(piles)': 'Gastroenterologist',
-    'Varicose veins': 'Vascular Surgeon',
-    'Hypothyroidism': 'Endocrinologist',
-    'Hyperthyroidism': 'Endocrinologist',
-    'Hypoglycemia': 'Endocrinologist',
-    'Osteoarthristis': 'Orthopedic',
-    'Arthritis': 'Orthopedic',
-    'Gastroenteritis': 'Gastroenterologist',
-    'Acne': 'Dermatologist',
-    'Urinary tract infection': 'Urologist',
-    'Psoriasis': 'Dermatologist',
-    'Impetigo': 'Dermatologist',
-    'Fungal infection': 'Dermatologist',
-    'Allergy': 'Dermatologist',
-    'GERD': 'Gastroenterologist',
-    'Drug Reaction': 'General Physician',
-    'Peptic ulcer diseae': 'Gastroenterologist',
-    'AIDS': 'General Physician',
-    'Diabetes ': 'Endocrinologist',
-    'Chronic cholestasis': 'Gastroenterologist',
-    '(vertigo) Paroymsal  Positional Vertigo': 'ENT Specialist'
-};
-
-// Fuzzy disease name matcher — handles Gemini returning slightly different names
-function findDiseaseMatch(diseaseName) {
-    if (diseaseInfo[diseaseName]) return diseaseName;
-    const lower = diseaseName.toLowerCase().trim();
-    for (const key of Object.keys(diseaseInfo)) {
-        if (key.toLowerCase().trim() === lower) return key;
-    }
-    for (const key of Object.keys(diseaseInfo)) {
-        if (key.toLowerCase().includes(lower) || lower.includes(key.toLowerCase())) return key;
-    }
-    return diseaseName;
-}
-
-// Fuzzy specialist lookup
-function findSpecialist(diseaseName) {
-    if (specialistMap[diseaseName]) return specialistMap[diseaseName];
-    const lower = diseaseName.toLowerCase().trim();
-    for (const [key, value] of Object.entries(specialistMap)) {
-        if (key.toLowerCase().trim() === lower) return value;
-    }
-    return "General Physician";
-}
-
-// Medical AI System Prompt
-const MEDICAL_SYSTEM_PROMPT = `You are MediBot, a warm and knowledgeable AI medical assistant for TrackNHeal — a healthcare platform offering ambulance booking, doctor appointments, and AI symptom diagnosis.
-
-## Your Personality
-- Warm, empathetic, and conversational — like a caring friend who is medically knowledgeable
-- Use emojis naturally but not excessively
-- Be reassuring but honest — never alarmist
-- **KEEP REPLIES SHORT** — 1-2 sentences max in the "reply" field. Be concise. No long paragraphs or bullet lists in "reply".
-- You have memory of the entire conversation — always refer back to what the user has already told you. Never ask for information they have already provided.
-
-## Conversation Rules
-1. When gathering symptoms, ask ONLY ONE clarifying question at a time — never multiple questions in one message.
-2. Build on the conversation history — if the user already said "I have fever", don't ask about fever again.
-3. After 2-3 symptoms are described, attempt a diagnosis. Don't keep asking endlessly.
-4. If the user gives a follow-up like "also headache" or "it's getting worse", combine it with what they said before.
-
-## Your Capabilities
-1. Emergency Detection — Identify life-threatening situations (heart attack, stroke, unconscious, not breathing, severe bleeding, accident, trauma, seizure, collapsed, choking, overdose, suicide)
-2. Symptom Analysis — Analyze described symptoms across the full conversation and provide a probable diagnosis
-3. Medical FAQs — Answer questions about diseases, treatments, medications
-4. Platform Guidance — Help users navigate TrackNHeal (booking doctors, ambulances, checking appointments)
-5. General Conversation — Handle greetings, thanks, goodbyes
-
-## Supported Diseases (use EXACT names from this list for the "disease" field)
-${diseaseReference}
-
-## Platform Info
-- Book ambulances via the "Book Ambulance Now" button on homepage
-- Book doctor appointments in the Doctor Appointment section
-- Check bookings via "My Bookings" in navigation
-- Emergency phone: 123-456-7890
-- Email: help@tracknheal.com
-
-## Response Rules
-1. For emergencies: Always urge immediate action and suggest booking an ambulance immediately
-2. For diagnoses: ONLY use disease names from the supported list above. Provide confidence as a decimal 0.0-1.0. Include ALL matched symptoms from the ENTIRE conversation as underscore_separated names.
-3. For follow-ups: Ask only ONE short clarifying question. Never ask multiple questions at once.
-4. Always end with a brief disclaimer that you are an AI and the user should consult a real doctor for confirmed diagnosis.
-5. If asked about a disease directly (e.g., "what is diabetes"), provide educational info as type "faq".
-
-## CRITICAL: Response Format
-Respond with ONLY valid JSON. No markdown fences, no extra text. Use this exact format:
-
-For emergency:
-{"type":"emergency","reply":"your response text"}
-
-For diagnosis (when you can identify a disease from symptoms):
-{"type":"diagnosis","reply":"your brief response","disease":"Exact Disease Name","confidence":0.85,"severity":"high","matchedSymptoms":["symptom_one","symptom_two"],"top3":[{"disease":"Name1","confidence":0.85,"severity":"high"},{"disease":"Name2","confidence":0.10,"severity":"medium"},{"disease":"Name3","confidence":0.05,"severity":"low"}]}
-
-For follow-up (need more info — ask exactly ONE question):
-{"type":"followup","reply":"your single clarifying question"}
-
-For all other responses (greetings, thanks, bye, FAQ, general chat):
-{"type":"greeting|farewell|thanks|faq|conversation","reply":"your response text","quickReplies":["suggestion 1","suggestion 2","suggestion 3"]}
-
-For followup type, you MAY also include quickReplies with symptom suggestions relevant to what's been discussed:
-{"type":"followup","reply":"your question","quickReplies":["Yes, I also have fever","No other symptoms","It started 2 days ago"]}`;
-
-// ============================================
-// ✅ CONVERSATION SESSION STORE (in-memory)
-// ============================================
-
-// Map<sessionId, { history: Array, lastActivity: Date }>
-const conversationSessions = new Map();
-
-// Session TTL: 30 minutes of inactivity
-const SESSION_TTL_MS = 30 * 60 * 1000;
-const MAX_HISTORY_TURNS = 20; // max user+model turn pairs to keep
-
-// Purge expired sessions every 10 minutes
-setInterval(() => {
-    const now = Date.now();
-    for (const [id, session] of conversationSessions) {
-        if (now - session.lastActivity > SESSION_TTL_MS) {
-            conversationSessions.delete(id);
-        }
-    }
-}, 10 * 60 * 1000);
-
-function getOrCreateSession(sessionId) {
-    if (!sessionId) return { history: [] }; // anonymous / fallback
-    if (!conversationSessions.has(sessionId)) {
-        conversationSessions.set(sessionId, { history: [], lastActivity: Date.now() });
-    }
-    const session = conversationSessions.get(sessionId);
-    session.lastActivity = Date.now();
-    return session;
-}
-
-function appendToSession(sessionId, role, text) {
-    if (!sessionId) return;
-    const session = conversationSessions.get(sessionId);
-    if (!session) return;
-    session.history.push({ role, parts: [{ text }] });
-    // Trim to last MAX_HISTORY_TURNS * 2 entries (each turn = 1 user + 1 model)
-    if (session.history.length > MAX_HISTORY_TURNS * 2) {
-        session.history.splice(0, 2); // drop oldest turn pair
-    }
-    session.lastActivity = Date.now();
-}
 
 const app = express();
 const server = http.createServer(app);
@@ -209,7 +121,7 @@ const io = new SocketIOServer(server, { cors: { origin: "*" } });
 const activeSimulations = new Map();
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
 // ✅ Serve static files from public folder
 app.use(express.static(path.join(__dirname, "public")));
@@ -227,6 +139,18 @@ app.get("/tracking.html", (req, res) => {
 app.get("/ambulance.html", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "html", "ambulance.html"));
 });
+app.get("/driver-login.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "html", "driver-login.html"));
+});
+app.get("/driver-dashboard.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "html", "driver-dashboard.html"));
+});
+app.get("/hospital-login.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "html", "hospital-login.html"));
+});
+app.get("/hospital-dashboard.html", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "html", "hospital-dashboard.html"));
+});
 
 // ✅ MySQL Connection
 const db = mysql.createConnection({
@@ -239,6 +163,31 @@ const db = mysql.createConnection({
 db.connect(err => {
     if (err) throw err;
     console.log("✅ MySQL Connected");
+
+    // Auto-create hospitals table
+    const createHospitalsTable = `
+        CREATE TABLE IF NOT EXISTS hospitals (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL UNIQUE,
+            email VARCHAR(255) NOT NULL UNIQUE,
+            password VARCHAR(255) NOT NULL,
+            address TEXT,
+            phone VARCHAR(20),
+            total_beds INT DEFAULT 0,
+            available_beds INT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `;
+    db.query(createHospitalsTable, (err) => {
+        if (err) console.error("Error creating hospitals table:", err.message);
+        else {
+            console.log("✅ hospitals table ready");
+            // Run migrations to add beds columns if they don't exist
+            db.query("ALTER TABLE hospitals ADD COLUMN total_beds INT DEFAULT 0", () => {});
+            db.query("ALTER TABLE hospitals ADD COLUMN available_beds INT DEFAULT 0", () => {});
+        }
+    });
+
 
     // Auto-create doctor_appointments table
     const createApptTable = `
@@ -387,7 +336,22 @@ db.connect(err => {
     `;
     db.query(createNotificationsTable, (err) => {
         if (err) console.error("Error creating notifications table:", err.message);
-        else console.log("✅ notifications table ready");
+        else {
+            console.log("✅ notifications table ready");
+            // Add doctor_id to notifications
+            db.query("ALTER TABLE notifications ADD COLUMN doctor_id INT DEFAULT NULL", (e) => {
+                if(e && !e.message.includes('Duplicate column')) console.error("Error adding doctor_id to notifications:", e.message);
+            });
+        }
+    });
+
+    // Set default passwords for doctors if they don't have one
+    bcrypt.hash('password123', SALT_ROUNDS, (err, hash) => {
+        if (!err) {
+            db.query("UPDATE doctors SET password = ? WHERE password IS NULL", [hash], (e, r) => {
+                if(!e && r.affectedRows > 0) console.log("✅ Set default passwords for existing doctors");
+            });
+        }
     });
 
     // Auto-create ambulance_drivers table
@@ -441,7 +405,7 @@ db.connect(err => {
     });
 });
 
-// ✅ SIGNUP API (with password hashing)
+// ✅ SIGNUP API (with OTP verification)
 app.post("/signup", async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -451,28 +415,42 @@ app.post("/signup", async (req, res) => {
     }
 
     try {
-        // Hash password with bcrypt
-        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
-        const sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
-
-        db.query(sql, [name, email, hashedPassword], (err, result) => {
+        // Check if email already exists in DB
+        const checkSql = "SELECT id FROM users WHERE email = ?";
+        db.query(checkSql, [email], async (err, results) => {
             if (err) {
-                if (err.code === "ER_DUP_ENTRY") {
-                    return res.json({ message: "Email already exists" });
-                }
-                console.error("Signup error:", err);
+                console.error("Signup check error:", err);
                 return res.json({ message: "Signup failed" });
             }
-            res.json({ message: "Signup successful", userId: result.insertId });
+            if (results.length > 0) {
+                return res.json({ message: "Email already exists" });
+            }
+
+            // Hash password with bcrypt
+            const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+            // Generate OTP and store signup data temporarily
+            const otp = generateOTP();
+            storeOTP(email, otp, 'signup', { name, email, hashedPassword });
+
+            // Send OTP email
+            try {
+                await sendOTPEmail(email, otp, name);
+                console.log(`📧 Signup OTP sent to ${email}`);
+                res.json({ otpRequired: true, message: "OTP sent to your email" });
+            } catch (emailErr) {
+                console.error("OTP email error:", emailErr);
+                otpStore.delete(email.toLowerCase());
+                res.json({ message: "Failed to send OTP email. Please try again." });
+            }
         });
     } catch (error) {
-        console.error("Hashing error:", error);
+        console.error("Signup error:", error);
         res.json({ message: "Signup failed" });
     }
 });
 
-// ✅ LOGIN API (with password comparison)
+// ✅ LOGIN API (direct login — no OTP required)
 app.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
@@ -495,15 +473,20 @@ app.post("/login", async (req, res) => {
 
                 let match = false;
                 if (isHashed) {
-                    // Compare with bcrypt
                     match = await bcrypt.compare(password, user.password);
                 } else {
-                    // Legacy: plain text comparison (for old accounts)
                     match = (password === user.password);
                 }
 
                 if (match) {
-                    res.json({ success: true, message: "Login successful", userId: user.id, userName: user.name });
+                    // Password correct — login directly (no OTP)
+                    console.log(`✅ User ${user.name} logged in successfully`);
+                    res.json({
+                        success: true,
+                        message: "Login successful",
+                        userId: user.id,
+                        userName: user.name
+                    });
                 } else {
                     res.json({ success: false, message: "Invalid email or password" });
                 }
@@ -516,6 +499,86 @@ app.post("/login", async (req, res) => {
         }
     });
 });
+
+// ✅ VERIFY OTP API
+app.post("/verify-otp", (req, res) => {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+        return res.json({ success: false, message: "Email and OTP are required" });
+    }
+
+    const result = verifyOTP(email, otp);
+
+    if (!result.valid) {
+        return res.json({ success: false, message: result.reason });
+    }
+
+    // OTP verified — clean up
+    otpStore.delete(email.toLowerCase());
+
+    if (result.context === 'signup') {
+        // Insert the user into DB now
+        const { name, hashedPassword } = result.userData;
+        const sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
+        db.query(sql, [name, email, hashedPassword], (err, dbResult) => {
+            if (err) {
+                if (err.code === "ER_DUP_ENTRY") {
+                    return res.json({ success: false, message: "Email already exists" });
+                }
+                console.error("Signup insert error:", err);
+                return res.json({ success: false, message: "Signup failed" });
+            }
+            res.json({
+                success: true,
+                message: "Signup successful",
+                context: 'signup',
+                userId: dbResult.insertId,
+                userName: name
+            });
+        });
+    } else if (result.context === 'login') {
+        // Return user session data
+        const { userId, userName } = result.userData;
+        res.json({
+            success: true,
+            message: "Login successful",
+            context: 'login',
+            userId,
+            userName
+        });
+    }
+});
+
+// ✅ RESEND OTP API
+app.post("/resend-otp", async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.json({ success: false, message: "Email is required" });
+    }
+
+    const existing = otpStore.get(email.toLowerCase());
+    if (!existing) {
+        return res.json({ success: false, message: "No pending verification. Please start over." });
+    }
+
+    // Generate a new OTP, keep same context and userData
+    const newOtp = generateOTP();
+    storeOTP(email, newOtp, existing.context, existing.userData);
+
+    try {
+        const userName = existing.userData?.name || existing.userData?.userName || '';
+        await sendOTPEmail(email, newOtp, userName);
+        console.log(`📧 Resent OTP to ${email}`);
+        res.json({ success: true, message: "New OTP sent to your email" });
+    } catch (emailErr) {
+        console.error("Resend OTP error:", emailErr);
+        res.json({ success: false, message: "Failed to send OTP. Please try again." });
+    }
+});
+
+
 
 // ✅ BOOK AMBULANCE API (creates pending booking, waits for driver acceptance)
 app.post("/book", async (req, res) => {
@@ -606,7 +669,7 @@ app.put("/user/bookings/:bookingId/cancel", (req, res) => {
 
         // Cancel the booking
         const updateSql = "UPDATE bookings SET status = 'cancelled' WHERE id = ?";
-        db.query(updateSql, [bookingId], (err, result) => {
+        db.query(updateSql, [bookingId], (err) => {
             if (err) {
                 console.error("Cancel booking error:", err);
                 return res.json({ success: false, message: "Failed to cancel booking" });
@@ -629,7 +692,313 @@ app.put("/user/bookings/:bookingId/cancel", (req, res) => {
     });
 });
 
+// ✅ HOSPITAL APIs:
+
+// ✅ HOSPITAL SIGNUP API
+app.post("/hospital/signup", async (req, res) => {
+    const { name, email, password, address, phone } = req.body;
+
+    if (!name || !email || !password) {
+        return res.status(400).json({ success: false, message: "Name, email, and password are required" });
+    }
+
+    try {
+        db.query("SELECT id FROM hospitals WHERE email = ? OR name = ?", [email, name], async (err, results) => {
+            if (err) {
+                console.error("Hospital signup check error:", err);
+                return res.status(500).json({ success: false, message: "Database error" });
+            }
+
+            if (results.length > 0) {
+                return res.status(400).json({ success: false, message: "Email or Hospital Name already registered" });
+            }
+
+            const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+            const sql = `INSERT INTO hospitals (name, email, password, address, phone) VALUES (?, ?, ?, ?, ?)`;
+            const values = [name, email, hashedPassword, address || '', phone || ''];
+
+            db.query(sql, values, (err, result) => {
+                if (err) {
+                    console.error("Hospital insert error:", err);
+                    return res.status(500).json({ success: false, message: "Failed to create hospital account" });
+                }
+                res.json({
+                    success: true,
+                    message: "Hospital registered successfully",
+                    hospitalId: result.insertId,
+                    hospitalName: name
+                });
+            });
+        });
+    } catch (error) {
+        console.error("Hospital signup error:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
+
+// ✅ HOSPITAL LOGIN API
+app.post("/hospital/login", (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.json({ success: false, message: "Email and password are required" });
+    }
+
+    const sql = "SELECT * FROM hospitals WHERE email=?";
+    db.query(sql, [email], async (err, results) => {
+        if (err) {
+            console.error("Hospital login error:", err);
+            return res.json({ success: false, message: "Login failed" });
+        }
+
+        if (results.length > 0) {
+            const hospital = results[0];
+
+            try {
+                const match = await bcrypt.compare(password, hospital.password);
+
+                if (match) {
+                    res.json({
+                        success: true,
+                        message: "Hospital login successful",
+                        hospitalId: hospital.id,
+                        hospitalName: hospital.name
+                    });
+                } else {
+                    res.json({ success: false, message: "Invalid credentials" });
+                }
+            } catch (error) {
+                console.error("Hospital compare error:", error);
+                res.json({ success: false, message: "Login failed" });
+            }
+        } else {
+            res.json({ success: false, message: "Invalid credentials" });
+        }
+    });
+});
+
+// ✅ HOSPITAL: ADD DOCTOR
+app.post("/hospital/doctors", (req, res) => {
+    const { name, specialization, degree, hospital, phone, email, available_days, available_time } = req.body;
+
+    if (!name || !specialization || !hospital) {
+        return res.json({ success: false, message: "Name, specialization, and hospital are required" });
+    }
+
+    const sql = `
+        INSERT INTO doctors 
+        (name, specialization, degree, hospital, phone, email, available_days, available_time) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const values = [name, specialization, degree || null, hospital, phone || null, email || null, available_days || 'Mon-Fri', available_time || '9:00 AM - 5:00 PM'];
+
+    db.query(sql, values, (err) => {
+        if (err) {
+            console.error("Add doctor error:", err);
+            return res.json({ success: false, message: "Failed to add doctor" });
+        }
+        res.json({ success: true, message: "Doctor added successfully" });
+    });
+});
+
+// ✅ HOSPITAL: UPDATE DOCTOR
+app.put("/hospital/doctors/:id", (req, res) => {
+    const { id } = req.params;
+    const { name, specialization, degree, phone, email, available_days, available_time, hospitalName } = req.body;
+
+    // Verify the doctor actually belongs to this hospital
+    db.query("SELECT * FROM doctors WHERE id = ? AND hospital = ?", [id, hospitalName], (checkErr, checkResults) => {
+        if (checkErr || checkResults.length === 0) {
+            return res.json({ success: false, message: "Unauthorized or doctor not found" });
+        }
+
+        const sql = `
+            UPDATE doctors 
+            SET name=?, specialization=?, degree=?, phone=?, email=?, available_days=?, available_time=?
+            WHERE id=?
+        `;
+        const values = [name, specialization, degree, phone, email, available_days, available_time, id];
+
+        db.query(sql, values, (err) => {
+            if (err) {
+                console.error("Update hospital doctor error:", err);
+                return res.json({ success: false, message: "Failed to update doctor" });
+            }
+            res.json({ success: true, message: "Doctor updated successfully" });
+        });
+    });
+});
+
+// ✅ HOSPITAL: DELETE DOCTOR
+app.delete("/hospital/doctors/:id", (req, res) => {
+    const { id } = req.params;
+    const hospitalName = req.body.hospitalName; // Expecting hospitalName in body for verification
+
+    // Verify the doctor actually belongs to this hospital
+    db.query("SELECT * FROM doctors WHERE id = ? AND hospital = ?", [id, hospitalName], (checkErr, checkResults) => {
+        if (checkErr || checkResults.length === 0) {
+            return res.json({ success: false, message: "Unauthorized or doctor not found" });
+        }
+
+        const sql = "DELETE FROM doctors WHERE id=?";
+        db.query(sql, [id], (err) => {
+            if (err) {
+                console.error("Delete hospital doctor error:", err);
+                return res.json({ success: false, message: "Failed to delete doctor" });
+            }
+            res.json({ success: true, message: "Doctor deleted successfully" });
+        });
+    });
+});
+
+// ✅ HOSPITAL: GET DOCTORS
+app.get("/hospital/doctors/:hospitalName", (req, res) => {
+    const { hospitalName } = req.params;
+    const sql = "SELECT * FROM doctors WHERE hospital = ? ORDER BY name ASC";
+    db.query(sql, [hospitalName], (err, results) => {
+        if (err) {
+            console.error("Fetch hospital doctors error:", err);
+            return res.json({ success: false, message: "Failed to fetch doctors" });
+        }
+        res.json({ success: true, doctors: results });
+    });
+});
+
+// ✅ HOSPITAL: GET APPOINTMENTS
+app.get("/hospital/appointments/:hospitalName", (req, res) => {
+    const { hospitalName } = req.params;
+    
+    const sql = `
+        SELECT da.* 
+        FROM doctor_appointments da
+        JOIN doctors d ON da.doctor_id = d.id
+        WHERE d.hospital = ?
+        ORDER BY da.appointment_date DESC, da.appointment_time DESC
+    `;
+    db.query(sql, [hospitalName], (err, results) => {
+        if (err) {
+            console.error("Fetch hospital appointments error:", err);
+            return res.json({ success: false, message: "Failed to fetch appointments" });
+        }
+        res.json({ success: true, appointments: results });
+    });
+});
+
+// ✅ HOSPITAL: UPDATE APPOINTMENT STATUS
+app.put("/hospital/appointments/:id/status", (req, res) => {
+    const { id } = req.params;
+    const { status, hospitalName } = req.body;
+
+    const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+        return res.json({ success: false, message: "Invalid status" });
+    }
+
+    // Verify the appointment belongs to a doctor at this hospital
+    const verifySql = `
+        SELECT da.id, da.user_id, da.doctor_name, da.appointment_date, da.appointment_time
+        FROM doctor_appointments da
+        JOIN doctors d ON da.doctor_id = d.id
+        WHERE da.id = ? AND d.hospital = ?
+    `;
+
+    db.query(verifySql, [id, hospitalName], (err, results) => {
+        if (err) {
+            console.error("Verify hospital appointment error:", err);
+            return res.json({ success: false, message: "Failed to update status" });
+        }
+        if (results.length === 0) {
+            return res.json({ success: false, message: "Appointment not found or not at your hospital" });
+        }
+
+        const appt = results[0];
+
+        const updateSql = "UPDATE doctor_appointments SET status = ? WHERE id = ?";
+        db.query(updateSql, [status, id], (uErr) => {
+            if (uErr) {
+                console.error("Update hospital appointment error:", uErr);
+                return res.json({ success: false, message: "Failed to update status" });
+            }
+
+            // Send notification
+            if (appt.user_id) {
+                const statusMessages = {
+                    confirmed: `${hospitalName} has confirmed your appointment with ${appt.doctor_name} on ${appt.appointment_date} at ${appt.appointment_time}. ✅`,
+                    completed: `Your appointment with ${appt.doctor_name} at ${hospitalName} has been marked as completed. Thank you for visiting!`,
+                    cancelled: `${hospitalName} has cancelled your appointment with ${appt.doctor_name} on ${appt.appointment_date} at ${appt.appointment_time}.`,
+                    pending: `${hospitalName} has set your appointment with ${appt.doctor_name} back to pending.`
+                };
+                const statusIcons = { confirmed: '✅', completed: '🏥', cancelled: '❌', pending: '🕐' };
+                createNotification(appt.user_id, null, `appointment_${status}`,
+                    `${statusIcons[status] || '📋'} Appointment ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+                    statusMessages[status] || `Your appointment status has been updated to ${status}.`);
+            }
+
+            res.json({ success: true, message: "Appointment status updated" });
+        });
+    });
+});
+
+
+// ✅ HOSPITAL: GET PROFILE
+app.get("/hospital/profile/:hospitalName", (req, res) => {
+    const { hospitalName } = req.params;
+    const sql = "SELECT id, name, email, address, phone, total_beds, available_beds FROM hospitals WHERE name = ?";
+    db.query(sql, [hospitalName], (err, results) => {
+        if (err) {
+            console.error("Fetch hospital profile error:", err);
+            return res.json({ success: false, message: "Failed to fetch profile" });
+        }
+        if (results.length === 0) {
+            return res.json({ success: false, message: "Hospital not found" });
+        }
+        res.json({ success: true, profile: results[0] });
+    });
+});
+
+// ✅ HOSPITAL: UPDATE PROFILE
+app.put("/hospital/profile/:hospitalName", (req, res) => {
+    const { hospitalName } = req.params;
+    const { address, phone, total_beds, available_beds } = req.body;
+
+    const sql = "UPDATE hospitals SET address = ?, phone = ?, total_beds = ?, available_beds = ? WHERE name = ?";
+    db.query(sql, [address, phone, total_beds, available_beds, hospitalName], (err) => {
+        if (err) {
+            console.error("Update hospital profile error:", err);
+            return res.json({ success: false, message: "Failed to update profile" });
+        }
+        res.json({ success: true, message: "Profile updated successfully" });
+    });
+});
+
 // ✅ ADMIN APIs:
+
+// ✅ ADMIN: GET ALL HOSPITALS
+app.get("/admin/hospitals", (req, res) => {
+    const sql = "SELECT id, name, email, phone, address, total_beds, available_beds, created_at FROM hospitals ORDER BY id DESC";
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("Fetch hospitals error:", err);
+            return res.json({ success: false, message: "Failed to fetch hospitals" });
+        }
+        res.json({ success: true, hospitals: results });
+    });
+});
+
+// ✅ ADMIN: DELETE HOSPITAL
+app.delete("/admin/hospitals/:id", (req, res) => {
+    const { id } = req.params;
+    const sql = "DELETE FROM hospitals WHERE id = ?";
+    db.query(sql, [id], (err) => {
+        if (err) {
+            console.error("Delete hospital error:", err);
+            return res.json({ success: false, message: "Failed to delete hospital" });
+        }
+        res.json({ success: true, message: "Hospital deleted successfully" });
+    });
+});
+
 // ✅ ADMIN LOGIN API
 app.post("/admin/login", async (req, res) => {
     const { email, password } = req.body;
@@ -1070,6 +1439,16 @@ function createNotification(userId, bookingId, type, title, message) {
     });
 }
 
+function createDoctorNotification(doctorId, bookingId, type, title, message) {
+    if (!doctorId) return;
+    const sql = `INSERT INTO notifications (doctor_id, booking_id, type, title, message) VALUES (?, ?, ?, ?, ?)`;
+    db.query(sql, [doctorId, bookingId || null, type, title, message], (err) => {
+        if (err) console.error("Doctor Notification insert error:", err.message);
+        // Push real-time notification via Socket.IO
+        io.to(`doctor-${doctorId}`).emit('new-notification', { type, title, message, booking_id: bookingId, created_at: new Date() });
+    });
+}
+
 // GET user notifications
 app.get("/user/notifications/:userId", (req, res) => {
     const { userId } = req.params;
@@ -1279,7 +1658,7 @@ app.put("/driver/rides/:bookingId/complete", (req, res) => {
     // Mock fare calculation
     const fare = Math.floor(Math.random() * 1500) + 500;
     
-    db.query("UPDATE bookings SET status = 'completed', fare = ? WHERE id = ? AND assigned_driver_id = ?", [fare, bookingId, driverId], (err, result) => {
+    db.query("UPDATE bookings SET status = 'completed', fare = ? WHERE id = ? AND assigned_driver_id = ?", [fare, bookingId, driverId], (err) => {
         if (err) return res.json({ success: false, message: "Failed to complete ride" });
         db.query("UPDATE ambulance_drivers SET status = 'available', total_trips = total_trips + 1, total_earnings = total_earnings + ? WHERE id = ?", [fare, driverId]);
         res.json({ success: true, message: "Ride completed" });
@@ -1293,7 +1672,7 @@ app.post("/user/bookings/:bookingId/rate", (req, res) => {
     
     if (!rating || rating < 1 || rating > 5) return res.json({ success: false, message: "Invalid rating" });
 
-    db.query("UPDATE bookings SET driver_rating = ? WHERE id = ?", [rating, bookingId], (err, result) => {
+    db.query("UPDATE bookings SET driver_rating = ? WHERE id = ?", [rating, bookingId], (err) => {
         if (err) return res.json({ success: false, message: "Failed to submit rating" });
         
         db.query("SELECT assigned_driver_id FROM bookings WHERE id = ?", [bookingId], (dErr, dRes) => {
@@ -1344,18 +1723,64 @@ app.post("/appointments", (req, res) => {
     }
 
     const sql = `INSERT INTO doctor_appointments(user_id, doctor_id, doctor_name, specialization, doctor_degree, patient_name, phone, email, appointment_date, appointment_time, reason, status)
-VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`;
+                 SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending'
+                 FROM DUAL
+                 WHERE NOT EXISTS (
+                     SELECT 1 FROM doctor_appointments 
+                     WHERE doctor_id = ? 
+                     AND appointment_date = ? 
+                     AND appointment_time = ? 
+                     AND status IN ('pending', 'confirmed')
+                 )`;
 
-    db.query(sql, [userId || null, doctorId || null, doctorName, specialization || null, doctorDegree || null, patientName, phone || null, email || null, appointmentDate, appointmentTime, reason || null], (err, result) => {
+    const params = [
+        userId || null, doctorId || null, doctorName, specialization || null, doctorDegree || null, patientName, phone || null, email || null, appointmentDate, appointmentTime, reason || null,
+        doctorId || null, appointmentDate, appointmentTime
+    ];
+
+    db.query(sql, params, (err, result) => {
         if (err) {
             console.error("Appointment booking error:", err);
             return res.json({ success: false, message: "Failed to book appointment" });
         }
+        
+        if (result.affectedRows === 0) {
+            return res.json({ success: false, message: "This time slot is already booked. Please select a different time." });
+        }
+        
+        // Notify doctor if doctorId is present
+        if (doctorId) {
+            createDoctorNotification(doctorId, result.insertId, 'new_appointment', 'New Appointment Request', `Patient ${patientName} has requested an appointment on ${appointmentDate} at ${appointmentTime}.`);
+        }
+
         res.json({
             success: true,
             message: "Appointment booked successfully",
             appointmentId: result.insertId
         });
+    });
+});
+
+// ✅ GET BOOKED TIME SLOTS FOR A DOCTOR
+app.get("/doctor/:doctorId/booked-slots", (req, res) => {
+    const { doctorId } = req.params;
+    const { date } = req.query;
+
+    if (!doctorId || !date) {
+        return res.json({ success: false, message: "Missing doctorId or date" });
+    }
+
+    const sql = `SELECT appointment_time FROM doctor_appointments 
+                 WHERE doctor_id = ? AND appointment_date = ? AND status IN ('pending', 'confirmed')`;
+    
+    db.query(sql, [doctorId, date], (err, results) => {
+        if (err) {
+            console.error("Fetch booked slots error:", err);
+            return res.json({ success: false, message: "Failed to fetch booked slots" });
+        }
+        
+        const bookedSlots = results.map(row => row.appointment_time);
+        res.json({ success: true, bookedSlots });
     });
 });
 
@@ -1390,6 +1815,24 @@ app.put("/admin/appointments/:id/status", (req, res) => {
         if (result.affectedRows === 0) {
             return res.json({ success: false, message: "Appointment not found" });
         }
+
+        // Send appointment status notification to the user
+        db.query("SELECT * FROM doctor_appointments WHERE id = ?", [id], (nErr, nRes) => {
+            if (!nErr && nRes.length > 0 && nRes[0].user_id) {
+                const appt = nRes[0];
+                const statusMessages = {
+                    confirmed: `Your appointment with ${appt.doctor_name} on ${appt.appointment_date} at ${appt.appointment_time} has been confirmed! ✅`,
+                    completed: `Your appointment with ${appt.doctor_name} has been marked as completed. Thank you for visiting!`,
+                    cancelled: `Your appointment with ${appt.doctor_name} on ${appt.appointment_date} at ${appt.appointment_time} has been cancelled.`,
+                    pending: `Your appointment with ${appt.doctor_name} has been set back to pending.`
+                };
+                const statusIcons = { confirmed: '✅', completed: '🏥', cancelled: '❌', pending: '🕐' };
+                createNotification(appt.user_id, null, `appointment_${status}`,
+                    `${statusIcons[status] || '📋'} Appointment ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+                    statusMessages[status] || `Your appointment status has been updated to ${status}.`);
+            }
+        });
+
         res.json({ success: true, message: "Appointment status updated successfully" });
     });
 });
@@ -1426,6 +1869,24 @@ app.get("/user/appointments/:userId", (req, res) => {
         res.json({ success: true, appointments: results });
     });
 });
+
+// ✅ DOCTOR LOGIN
+app.post("/doctor/login", async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) return res.json({ success: false, message: "Email and password required" });
+    db.query("SELECT * FROM doctors WHERE email = ?", [email], async (err, results) => {
+        if (err || results.length === 0) return res.json({ success: false, message: "Invalid credentials" });
+        const doctor = results[0];
+        try {
+            if (!doctor.password) return res.json({ success: false, message: "Account not setup completely (no password)" });
+            const match = await bcrypt.compare(password, doctor.password);
+            if (match) {
+                res.json({ success: true, message: "Login successful", doctorId: doctor.id, doctorName: doctor.name });
+            } else { res.json({ success: false, message: "Invalid credentials" }); }
+        } catch (e) { res.json({ success: false, message: "Login failed" }); }
+    });
+});
+
 // ✅ DOCTOR: GET MY APPOINTMENTS
 app.get("/doctor/appointments/:doctorName", (req, res) => {
     const { doctorName } = req.params;
@@ -1459,6 +1920,24 @@ app.put("/doctor/appointments/:id/status", (req, res) => {
         if (result.affectedRows === 0) {
             return res.json({ success: false, message: "Appointment not found or not yours" });
         }
+
+        // Send appointment status notification to the user
+        db.query("SELECT * FROM doctor_appointments WHERE id = ?", [id], (nErr, nRes) => {
+            if (!nErr && nRes.length > 0 && nRes[0].user_id) {
+                const appt = nRes[0];
+                const statusMessages = {
+                    confirmed: `Dr. ${doctorName} has confirmed your appointment on ${appt.appointment_date} at ${appt.appointment_time}. ✅`,
+                    completed: `Your appointment with Dr. ${doctorName} has been marked as completed. Thank you for visiting!`,
+                    cancelled: `Dr. ${doctorName} has cancelled your appointment on ${appt.appointment_date} at ${appt.appointment_time}.`,
+                    pending: `Dr. ${doctorName} has set your appointment back to pending.`
+                };
+                const statusIcons = { confirmed: '✅', completed: '🏥', cancelled: '❌', pending: '🕐' };
+                createNotification(appt.user_id, null, `appointment_${status}`,
+                    `${statusIcons[status] || '📋'} Appointment ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+                    statusMessages[status] || `Your appointment status has been updated to ${status}.`);
+            }
+        });
+
         res.json({ success: true, message: "Appointment status updated" });
     });
 });
@@ -1504,7 +1983,12 @@ app.get("/admin/fleet/live", (req, res) => {
 
 // ✅ GET ALL DOCTORS
 app.get("/doctors", (req, res) => {
-    const sql = "SELECT * FROM doctors ORDER BY id DESC";
+    const sql = `
+        SELECT d.*, h.address as h_address, h.phone as h_phone, h.total_beds, h.available_beds 
+        FROM doctors d 
+        LEFT JOIN hospitals h ON d.hospital = h.name 
+        ORDER BY d.id DESC
+    `;
     db.query(sql, (err, results) => {
         if (err) {
             console.error("Fetch doctors error:", err);
@@ -1517,7 +2001,13 @@ app.get("/doctors", (req, res) => {
 // ✅ GET DOCTORS BY SPECIALIZATION
 app.get("/doctors/specialization/:spec", (req, res) => {
     const { spec } = req.params;
-    const sql = "SELECT * FROM doctors WHERE specialization LIKE ? ORDER BY rating DESC";
+    const sql = `
+        SELECT d.*, h.address as h_address, h.phone as h_phone, h.total_beds, h.available_beds 
+        FROM doctors d 
+        LEFT JOIN hospitals h ON d.hospital = h.name 
+        WHERE d.specialization LIKE ? 
+        ORDER BY d.rating DESC
+    `;
     db.query(sql, [`%${spec}%`], (err, results) => {
         if (err) {
             console.error("Fetch doctors by spec error:", err);
@@ -1527,182 +2017,6 @@ app.get("/doctors/specialization/:spec", (req, res) => {
     });
 });
 
-
-// ============================================
-// ✅ AI MEDICAL CHATBOT API (Gemini-Powered, Multi-Turn)
-// ============================================
-
-app.post("/chat", async (req, res) => {
-    const { message, sessionId } = req.body;
-
-    if (!message) {
-        return res.json({ success: false, reply: "Hmm, I didn't quite get that. Could you say that again for me?" });
-    }
-
-    // Retrieve or create the session's conversation history
-    const session = getOrCreateSession(sessionId);
-
-    // Build the contents array: existing history + new user message
-    const contents = [
-        ...session.history,
-        { role: "user", parts: [{ text: message }] }
-    ];
-
-    try {
-        // Call Gemini API with full multi-turn conversation history
-        const response = await genAI.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents,
-            config: {
-                systemInstruction: MEDICAL_SYSTEM_PROMPT,
-                responseMimeType: "application/json",
-            }
-        });
-
-        const responseText = response.text;
-        let data;
-
-        try {
-            data = JSON.parse(responseText);
-        } catch (parseErr) {
-            console.error("Gemini JSON parse error:", parseErr.message);
-            // If Gemini returned non-JSON, treat as plain text reply
-            return res.json({
-                success: true,
-                reply: responseText || "I'm having trouble processing that. Could you rephrase?",
-                action: null,
-                richData: null
-            });
-        }
-
-        const responseType = data.type;
-
-        // Persist user message and model response to session history
-        appendToSession(sessionId, 'user', message);
-        appendToSession(sessionId, 'model', responseText);
-
-        // ── Emergency Response ──
-        if (responseType === "emergency") {
-            return res.json({
-                success: true,
-                reply: data.reply,
-                action: "ambulance",
-                richData: null,
-                quickReplies: ["Book ambulance now", "Call 123-456-7890"]
-            });
-        }
-
-        // ── Diagnosis Response (with rich card data) ──
-        if (responseType === "diagnosis" && data.disease) {
-            // Fuzzy-match the disease name to our local database
-            const matchedName = findDiseaseMatch(data.disease);
-            const info = diseaseInfo[matchedName] || {};
-            const severity = info.severity || data.severity || "unknown";
-            const specialist = findSpecialist(matchedName);
-            const confidence = ((data.confidence || 0.8) * 100).toFixed(1);
-
-            // Build conversational reply
-            const severityEmoji = severity === 'high' ? '🔴' : severity === 'medium' ? '🟠' : '🟢';
-            const reply = severity === 'high'
-                ? `${severityEmoji} This looks like **${matchedName}** (${confidence}% match) — please see a **${specialist}** right away, this needs urgent attention.`
-                : `${severityEmoji} Based on your symptoms, this looks like **${matchedName}** (${confidence}% match) — I'd recommend seeing a **${specialist}**.`;
-
-            // Query doctor database for matching specialists
-            const availableDoctors = await new Promise((resolve) => {
-                const sql = "SELECT id, name, specialization, degree, hospital, rating, available_days, available_time FROM doctors WHERE specialization LIKE ? ORDER BY rating DESC LIMIT 3";
-                db.query(sql, [`%${specialist}%`], (err, results) => {
-                    resolve(err || !results ? [] : results);
-                });
-            });
-
-            // Build richData (same shape the frontend expects)
-            const richData = {
-                disease: matchedName,
-                confidence: parseFloat(confidence),
-                severity,
-                description: info.description || "",
-                precautions: info.precautions || [],
-                specialist,
-                matchedSymptoms: data.matchedSymptoms || [],
-                medications: info.medications || [],
-                diets: info.diets || [],
-                workouts: info.workouts || [],
-                availableDoctors: availableDoctors.map(doc => ({
-                    id: doc.id,
-                    name: doc.name,
-                    specialization: doc.specialization,
-                    degree: doc.degree,
-                    hospital: doc.hospital,
-                    rating: doc.rating,
-                    available_days: doc.available_days,
-                    available_time: doc.available_time
-                })),
-                top3: (data.top3 || []).map(t => {
-                    const tName = findDiseaseMatch(t.disease);
-                    const tInfo = diseaseInfo[tName] || {};
-                    return {
-                        disease: tName,
-                        confidence: ((t.confidence || 0) * 100).toFixed(1),
-                        severity: tInfo.severity || t.severity || "unknown"
-                    };
-                })
-            };
-
-            const action = severity === "high" ? "ambulance" : "doctor";
-
-            return res.json({
-                success: true,
-                reply,
-                action,
-                richData,
-                accumulatedSymptoms: [],
-                quickReplies: action === 'ambulance'
-                    ? ["Book ambulance now", "More info"]
-                    : ["Book a doctor", "Tell me more", "What medications?"]
-            });
-        }
-
-        // ── Follow-up (needs more symptoms) ──
-        if (responseType === "followup") {
-            return res.json({
-                success: true,
-                reply: data.reply,
-                action: null,
-                richData: null,
-                needsMoreInfo: true,
-                quickReplies: data.quickReplies || []
-            });
-        }
-
-        // ── All other types (greeting, farewell, thanks, faq, conversation) ──
-        return res.json({
-            success: true,
-            reply: data.reply,
-            action: null,
-            richData: null,
-            quickReplies: data.quickReplies || []
-        });
-
-    } catch (err) {
-        console.error("Gemini API Error:", err.message);
-        return res.json({
-            success: true,
-            reply: "Sorry, I'm having a little trouble right now 😔 — try again in a moment or use the homepage to book a doctor or ambulance!",
-            action: null,
-            richData: null,
-            quickReplies: []
-        });
-    }
-});
-
-// ✅ Clear a chat session
-app.post("/chat/clear", (req, res) => {
-    const { sessionId } = req.body;
-    if (sessionId && conversationSessions.has(sessionId)) {
-        conversationSessions.delete(sessionId);
-    }
-    res.json({ success: true });
-});
 
 
 // ============================================
@@ -2096,6 +2410,8 @@ function stopTracking(bookingId) {
     });
 }
 
+
+
 // ===== SOCKET.IO CONNECTION HANDLING =====
 io.on('connection', (socket) => {
     console.log('🔌 Client connected:', socket.id);
@@ -2114,10 +2430,97 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Doctor joins their notification room
+    socket.on('register-doctor', (doctorId) => {
+        if (doctorId) {
+            socket.join(`doctor-${doctorId}`);
+            console.log(`🔔 Client ${socket.id} joined doctor-${doctorId} notifications`);
+        }
+    });
+
     socket.on('disconnect', () => {
         console.log('🔌 Client disconnected:', socket.id);
     });
 });
+
+// ===== CHATBOT API (LM STUDIO) =====
+app.post('/api/chat', async (req, res) => {
+    try {
+        const { messages } = req.body;
+        
+        if (!messages || !Array.isArray(messages)) {
+            return res.status(400).json({ error: "Invalid messages format" });
+        }
+
+        // Fetch doctors from the database to include in the context
+        db.query("SELECT name, specialization, hospital, degree FROM doctors", async (err, results) => {
+            if (err) {
+                console.error("Database error fetching doctors:", err);
+                return res.status(500).json({ error: "Internal server error" });
+            }
+
+            // Format doctor list
+            let doctorListText = "No doctors currently available in the database.";
+            if (results && results.length > 0) {
+                doctorListText = results.map(doc => 
+                    `- Dr. ${doc.name} (${doc.degree || 'Degree N/A'}), Specialization: ${doc.specialization}, Hospital: ${doc.hospital || 'N/A'}`
+                ).join("\\n");
+            }
+
+            const systemPrompt = {
+                role: "system",
+                content: `You are an AI Medical Assistant for TracknHeal. Your job is to help users understand potential diseases based on their symptoms, recommend doctors from our database, and assist them with navigating our website.
+
+Here is the current list of available doctors in our database:
+${doctorListText}
+
+Website Navigation Assistance:
+- To book an ambulance: Tell the user to click on the "🚑 Book Ambulance" link in the navigation bar.
+- To book a doctor appointment: Tell the user to click on the "🩺 Doctor Appointment" link in the navigation bar.
+- To access the hospital portal: Tell the user to click on the "🏥 Hospital Portal" link in the navigation bar.
+
+Guidelines:
+1. Keep your responses extremely short, concise, and professional (maximum 1-2 sentences). Do not give long explanations.
+2. If asked for a doctor recommendation based on symptoms, suggest a doctor from the list above whose specialization matches the required field (e.g., Cardiologist for heart issues).
+3. If no matching doctor is found, say we currently don't have a specialist for that in our database but they should still seek medical attention.`
+            };
+
+            const lmStudioPayload = {
+                model: "local-model", // LM Studio usually ignores this for local models
+                messages: [systemPrompt, ...messages],
+                temperature: 0.7,
+                max_tokens: 150,
+                stream: false
+            };
+
+            try {
+                // Call LM Studio local server
+                const response = await fetch("http://127.0.0.1:1234/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(lmStudioPayload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`LM Studio API error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                res.json(data);
+            } catch (fetchErr) {
+                console.error("Error connecting to LM Studio:", fetchErr);
+                res.status(500).json({ error: "Could not connect to the AI model. Please ensure LM Studio is running on port 1234." });
+            }
+        });
+    } catch (e) {
+        console.error("Chat API error:", e);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+
 
 // Start server
 const PORT = process.env.PORT || 3000;

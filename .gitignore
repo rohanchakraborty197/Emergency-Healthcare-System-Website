@@ -1,2 +1,5 @@
 node_modules
 .env
+chatbot/venv/
+chatbot/__pycache__/
+chatbot/models/*.pkl

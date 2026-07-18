@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor Dashboard - TrackNHeal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+
+<body>
+    <div class="dashboard-view" style="display: block;">
+        <header class="header">
+            <div class="header-left">
+                <img src="../assets/website-logo.jpeg" style="height: 32px; width: auto;" alt="Logo">
+                <h1>Doctor Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <span class="admin-name">Welcome, <strong id="doctorNameLabel">Doctor</strong></span>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active">My Appointments</button>
+        </nav>
+
+        <main class="main-content">
+            <div class="section-view active">
+                <div class="section-header">
+                    <h2>Appointment Requests</h2>
+                    <button class="refresh-btn" onclick="loadAppointments()">Refresh</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Patient Name</th>
+                                <th>Phone</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointmentsTable">
+                            <tr>
+                                <td colspan="6" class="loading-text">Loading appointments...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Load Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const doctorId = localStorage.getItem('doctorId');
+        const doctorName = localStorage.getItem('doctorName');
+
+        if (!doctorId || !doctorName) {
+            window.location.href = '/doctor-login.html';
+        }
+
+        document.getElementById('doctorNameLabel').textContent = `Dr. ${doctorName}`;
+
+        async function loadAppointments() {
+            try {
+                const res = await fetch(`/doctor/appointments/${encodeURIComponent('Dr. ' + doctorName)}`);
+                const data = await res.json();
+
+                const tbody = document.getElementById('appointmentsTable');
+                if (!data.success) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="loading-text">Failed to load appointments</td></tr>`;
+                    return;
+                }
+
+                if (data.appointments.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="loading-text">No appointments found</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = data.appointments.map(appt => {
+                    let actionButtons = '';
+                    if (appt.status === 'pending') {
+                        actionButtons = `
+                            <button onclick="updateStatus(${appt.id}, 'confirmed')" style="background:#27ae60; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Accept</button>
+                            <button onclick="updateStatus(${appt.id}, 'cancelled')" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-left:5px;">Reject</button>
+                        `;
+                    } else if (appt.status === 'confirmed') {
+                        actionButtons = `
+                            <button onclick="updateStatus(${appt.id}, 'completed')" style="background:#3498db; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Mark Completed</button>
+                        `;
+                    }
+
+                    return `
+                        <tr>
+                            <td>${new Date(appt.appointment_date).toLocaleDateString()} at ${appt.appointment_time}</td>
+                            <td>${appt.patient_name}</td>
+                            <td>${appt.phone || 'N/A'}</td>
+                            <td>${appt.reason || 'N/A'}</td>
+                            <td><strong><span style="color: ${getStatusColor(appt.status)}">${appt.status.toUpperCase()}</span></strong></td>
+                            <td>${actionButtons || '—'}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function getStatusColor(status) {
+            switch (status) {
+                case 'pending': return '#f39c12';
+                case 'confirmed': return '#27ae60';
+                case 'completed': return '#3498db';
+                case 'cancelled': return '#e74c3c';
+                default: return '#333';
+            }
+        }
+
+        async function updateStatus(id, newStatus) {
+            if (!confirm(`Are you sure you want to change this appointment's status to ${newStatus}?`)) return;
+            try {
+                const res = await fetch(`/doctor/appointments/${id}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus, doctorName: 'Dr. ' + doctorName })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadAppointments(); // Reload table
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Failed to update status");
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('doctorId');
+            localStorage.removeItem('doctorName');
+            window.location.href = '/doctor-login.html';
+        }
+
+        // Initialize Real-time Socket Connection (No visual bell, just auto-refresh)
+        const socket = io();
+        socket.on('connect', () => {
+            // Join doctor specific room
+            socket.emit('register-doctor', doctorId);
+        });
+
+        socket.on('new-notification', (notification) => {
+            // When a new booking happens, silently reload the table
+            if (notification.type === 'new_appointment') {
+                loadAppointments();
+            }
+        });
+
+        // Initial Load
+        loadAppointments();
+    </script>
+</body>
+
+</html>

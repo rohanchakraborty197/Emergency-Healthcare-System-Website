@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hospital Dashboard - TrackNHeal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+
+<body>
+    <!-- ==================== DASHBOARD VIEW ==================== -->
+    <div class="dashboard-view" id="dashboardView" style="display: block;">
+        <header class="header">
+            <div class="header-left">
+                <img src="../assets/website-logo.jpeg" style="height: 32px; width: auto;">
+                <h1>Hospital Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <span class="admin-name">Welcome, <strong id="hospitalName">Hospital</strong></span>
+                <button class="logout-btn" onclick="handleLogout()">🚪 Logout</button>
+            </div>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" id="tabDoctors" onclick="switchTab('doctors')">🩺 Our Doctors <span class="tab-count"
+                    id="tabDoctorsCount">-</span></button>
+            <button class="nav-tab" id="tabAppointments" onclick="switchTab('appointments')">📅 Appointments <span
+                    class="tab-count" id="tabAppointmentsCount">-</span></button>
+            <button class="nav-tab" id="tabProfile" onclick="switchTab('profile')">🏥 Profile & Beds</button>
+        </nav>
+
+        <main class="main-content">
+
+            <!-- ==================== DOCTORS VIEW ==================== -->
+            <div class="section-view active" id="doctorsView">
+                <div class="section-header">
+                    <h2>🩺 Our Doctors</h2>
+                    <div style="display:flex; gap:10px;">
+                        <button class="refresh-btn" onclick="loadDoctors()">🔄 Refresh</button>
+                        <button class="add-doctor-btn" onclick="openDoctorForm()">➕ Add Doctor</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Doctor Name</th>
+                                <th>Specialization</th>
+                                <th>Contact</th>
+                                <th>Availability</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="doctorsTable">
+                            <tr>
+                                <td colspan="6" class="loading-text">Loading doctors</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ==================== APPOINTMENTS VIEW ==================== -->
+            <div class="section-view" id="appointmentsView">
+                <!-- Appointment Stats -->
+                <div class="appt-stats-grid" id="apptStatsGrid">
+                    <div class="appt-stat-card appt-total">
+                        <div class="appt-stat-value" id="apptTotalCount">-</div>
+                        <div class="appt-stat-label">Total Appointments</div>
+                    </div>
+                    <div class="appt-stat-card appt-pending">
+                        <div class="appt-stat-value" id="apptPendingCount">-</div>
+                        <div class="appt-stat-label">Pending</div>
+                    </div>
+                    <div class="appt-stat-card appt-confirmed">
+                        <div class="appt-stat-value" id="apptConfirmedCount">-</div>
+                        <div class="appt-stat-label">Confirmed</div>
+                    </div>
+                    <div class="appt-stat-card appt-completed">
+                        <div class="appt-stat-value" id="apptCompletedCount">-</div>
+                        <div class="appt-stat-label">Completed</div>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h2>📅 Appointments</h2>
+                    <button class="refresh-btn" onclick="loadAppointments()">🔄 Refresh</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Patient</th>
+                                <th>Doctor</th>
+                                <th>Date & Time</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointmentsTable">
+                            <tr>
+                                <td colspan="7" class="loading-text">Loading appointments</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ==================== PROFILE & BEDS VIEW ==================== -->
+            <div class="section-view" id="profileView">
+                <div class="section-header">
+                    <h2>🏥 Hospital Profile & Bed Availability</h2>
+                </div>
+                
+                <div style="background: var(--bg-card); padding: 30px; border-radius: 16px; max-width: 600px; border: 1px solid var(--border-color-dark); box-shadow: var(--shadow-dark);">
+                    <form id="profileForm" onsubmit="saveProfile(event)">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display:block; margin-bottom: 8px; font-weight: 600; color: var(--text-muted-dark);">Hospital Name</label>
+                            <input type="text" id="profName" disabled style="width: 100%; padding: 12px; border: 1px solid var(--border-color-dark); border-radius: 8px; background: rgba(255,255,255,0.02); color: var(--text-muted-dark);">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display:block; margin-bottom: 8px; font-weight: 600; color: var(--text-muted-dark);">Email</label>
+                            <input type="email" id="profEmail" disabled style="width: 100%; padding: 12px; border: 1px solid var(--border-color-dark); border-radius: 8px; background: rgba(255,255,255,0.02); color: var(--text-muted-dark);">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display:block; margin-bottom: 8px; font-weight: 600; color: var(--text-light);">Address</label>
+                            <input type="text" id="profAddress" required style="width: 100%; padding: 12px; border: 1px solid var(--border-color-dark); border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-light); transition: border-color 0.3s ease;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display:block; margin-bottom: 8px; font-weight: 600; color: var(--text-light);">Phone</label>
+                            <input type="text" id="profPhone" required style="width: 100%; padding: 12px; border: 1px solid var(--border-color-dark); border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-light); transition: border-color 0.3s ease;">
+                        </div>
+                        
+                        <h3 style="margin: 30px 0 15px 0; border-top: 1px solid var(--border-color-dark); padding-top: 25px; color: var(--text-light);">🛏️ Bed Availability</h3>
+                        
+                        <div style="display: flex; gap: 20px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label style="display:block; margin-bottom: 8px; font-weight: 600; color: var(--text-light);">Total Beds</label>
+                                <input type="number" id="profTotalBeds" min="0" required style="width: 100%; padding: 12px; border: 1px solid var(--border-color-dark); border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-light); font-size: 1.1em;">
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label style="display:block; margin-bottom: 8px; font-weight: 600; color: var(--text-light);">Available Beds</label>
+                                <input type="number" id="profAvailableBeds" min="0" required style="width: 100%; padding: 12px; border: 1px solid var(--border-color-dark); border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-light); font-size: 1.1em;">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="logout-btn" style="margin-top: 30px; width: 100%; padding: 14px; font-size: 1.1em; background: var(--gradient); color: white; border: none; border-radius: 12px; transition: transform 0.2s ease, box-shadow 0.2s ease;">💾 Save Profile & Beds</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== DOCTOR FORM MODAL ==================== -->
+    <div class="modal-overlay" id="doctorFormModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="doctorFormTitle">➕ Add Doctor</h2>
+                <button class="modal-close" onclick="closeDoctorForm()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="doctorFormId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Doctor Name *</label>
+                        <input type="text" id="dfName" placeholder="Dr. Full Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Specialization *</label>
+                        <input type="text" id="dfSpec" placeholder="e.g. Cardiologist">
+                    </div>
+                    <div class="form-group">
+                        <label>Degree</label>
+                        <input type="text" id="dfDegree" placeholder="e.g. MBBS, MD">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="text" id="dfPhone" placeholder="Phone number">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="dfEmail" placeholder="email@hospital.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Available Days</label>
+                        <input type="text" id="dfDays" placeholder="Mon-Fri" value="Mon-Fri">
+                    </div>
+                    <div class="form-group">
+                        <label>Available Time</label>
+                        <input type="text" id="dfTime" placeholder="9:00 AM - 5:00 PM" value="9:00 AM - 5:00 PM">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-cancel-form" onclick="closeDoctorForm()">Cancel</button>
+                    <button class="btn-save" onclick="saveDoctor()">💾 Save Doctor</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== APPOINTMENT DETAILS MODAL ==================== -->
+    <div class="modal-overlay" id="apptDetailsModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>📋 Appointment Details</h2>
+                <button class="modal-close" onclick="closeApptDetails()">&times;</button>
+            </div>
+            <div class="modal-body" id="apptDetailsContent" style="padding: 20px; line-height: 1.6; font-size: 1.1em;">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/hospital-dashboard.js"></script>
+</body>
+
+</html>
