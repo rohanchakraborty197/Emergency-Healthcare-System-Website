@@ -2,6 +2,8 @@
 
 TracknHeal is a comprehensive, real-time web-based healthcare and emergency response platform. It acts as a bridge connecting patients, specialized doctors, hospitals, and ambulance drivers to provide a seamless ecosystem for medical emergencies and appointments.
 
+**GitHub Repository:** [https://github.com/rohanchakraborty197/Emergency-Healthcare-System-Website](https://github.com/rohanchakraborty197/Emergency-Healthcare-System-Website)
+
 ---
 
 ## 📑 Table of Contents
@@ -84,7 +86,7 @@ TracknHeal heavily relies on **Socket.io** to provide immediate updates without 
 ## 📁 Directory Structure
 
 ```text
-/College_Proj
+/Emergency-Healthcare-System-Website
 ├── .env                    # Environment variables (DB credentials, SMTP keys)
 ├── package.json            # Node.js dependencies
 ├── server.js               # Main Express.js backend & Socket.io server
