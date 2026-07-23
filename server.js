@@ -162,17 +162,25 @@ app.get("/hospital-dashboard.html", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "html", "hospital-dashboard.html"));
 });
 
-// ✅ MySQL Connection
-const db = mysql.createConnection({
+// ✅ MySQL Connection Pool (auto-reconnects on dropped connections)
+const db = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
+    database: process.env.DB_NAME,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
-db.connect(err => {
-    if (err) throw err;
-    console.log("✅ MySQL Connected");
+// Verify pool connectivity on startup
+db.getConnection((err, connection) => {
+    if (err) {
+        console.error("❌ MySQL Pool connection failed:", err.message);
+        process.exit(1);
+    }
+    connection.release();
+    console.log("✅ MySQL Pool Connected");
 
     // Auto-create hospitals table
     const createHospitalsTable = `
