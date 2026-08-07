@@ -1,0 +1,22 @@
+name: Deploy to Azure VM
+
+on:
+  push:
+    branches:
+      - dev_swarnendu  # Change this to your main branch if needed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Azure VM via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd /var/www/tracknheal
+            sudo git pull origin dev_swarnendu
+            sudo npm install --production
+            pm2 restart all
