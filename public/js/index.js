@@ -1558,7 +1558,7 @@ async function sendChatMessage() {
     } catch (error) {
         removeTypingIndicator(typingId);
         console.error("Chatbot error:", error);
-        addChatMessage("Sorry, I am having trouble connecting to the medical database or AI model. Ensure the backend and LM Studio are running.", 'bot');
+        addChatMessage("Sorry, the servers are unreachable right now.", 'bot');
     }
 }
 
