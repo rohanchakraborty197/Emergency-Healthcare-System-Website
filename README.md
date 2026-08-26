@@ -205,7 +205,7 @@ Once the server initializes, open your web browser and navigate to:
 
 ## 🔄 CI/CD Deployment
 
-The project includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically deploys to an Azure VM on every push to the configured branch:
+The project includes a GitHub Actions workflow that automatically deploys to an Azure VM on every push to the configured branch:
 
 1. Connects to the VM via SSH
 2. Pulls latest code from the branch
